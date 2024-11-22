@@ -61,29 +61,6 @@ void AUE_MP_ShooterCharacter::BeginPlay()
 	Super::BeginPlay();
 }
 
-void AUE_MP_ShooterCharacter::OpenLobby()
-{
-	UWorld* world = GetWorld();
-	if (world)
-	{
-		world->ServerTravel("/Game/ThirdPerson/Maps/Lobby?listen");
-	}
-}
-
-void AUE_MP_ShooterCharacter::CallOpenLevel(const FString& Address)
-{
-	UGameplayStatics::OpenLevel(this, FName(*Address));
-}
-
-void AUE_MP_ShooterCharacter::CallClientTravelWithAddress(const FString& Address)
-{
-	APlayerController* PlayerController = GetGameInstance()->GetFirstLocalPlayerController();
-	if (PlayerController)
-	{
-		PlayerController->ClientTravel(Address, ETravelType::TRAVEL_Absolute);
-	}
-}
-
 //////////////////////////////////////////////////////////////////////////
 // Input
 
