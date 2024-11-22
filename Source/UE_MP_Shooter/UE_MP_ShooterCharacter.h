@@ -4,7 +4,10 @@
 
 #include "CoreMinimal.h"
 #include "GameFramework/Character.h"
+#include "Interfaces/OnlineSessionDelegates.h"
 #include "Logging/LogMacros.h"
+#include "Interfaces/OnlineSessionInterface.h"
+
 #include "UE_MP_ShooterCharacter.generated.h"
 
 class USpringArmComponent;
@@ -69,9 +72,17 @@ public:
 	FORCEINLINE class USpringArmComponent* GetCameraBoom() const { return CameraBoom; }
 	/** Returns FollowCamera subobject **/
 	FORCEINLINE class UCameraComponent* GetFollowCamera() const { return FollowCamera; }
-
-public:
+	
 	// Pointer to online session interface
-	TSharedPtr<class IOnlineSession, ESPMode::ThreadSafe> OnlineSessionInterface;
+	IOnlineSessionPtr OnlineSessionInterface;
+
+protected:
+	UFUNCTION(BlueprintCallable)
+	void CreateGameSession();
+
+	void OnCreateSessionComplete(FName SessionName, bool bWasSuccessful);
+
+private:
+	FOnCreateSessionCompleteDelegate CreateSessionCompleteDelegate;
 };
 
