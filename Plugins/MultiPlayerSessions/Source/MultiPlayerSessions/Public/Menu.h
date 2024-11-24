@@ -4,6 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "Blueprint/UserWidget.h"
+#include "Interfaces/OnlineSessionInterface.h"
 #include "Menu.generated.h"
 
 /**
@@ -21,6 +22,19 @@ public:
 protected:
 	virtual bool Initialize() override;
 	virtual void NativeDestruct() override;
+
+	//
+	// Callbacks for delegates on MultiplayerSessionSubsystem
+	//
+	UFUNCTION()
+	void OnCreateSession(bool bWasSuccessful);
+	void OnFindSessions(const TArray<FOnlineSessionSearchResult>& SessionResult, bool bWasSuccessful);
+	void OnJoinSession(EOnJoinSessionCompleteResult::Type Result);
+	UFUNCTION()
+	void OnStartSession(bool bWasSuccessful);
+	UFUNCTION()
+	void OnDestroySession(bool bWasSuccessful);
+	
 
 private:
 	UPROPERTY(meta = (BindWidget))

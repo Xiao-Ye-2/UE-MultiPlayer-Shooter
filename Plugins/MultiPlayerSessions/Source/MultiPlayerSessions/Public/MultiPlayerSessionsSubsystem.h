@@ -7,6 +7,12 @@
 #include "Interfaces/OnlineSessionInterface.h"
 #include "MultiPlayerSessionsSubsystem.generated.h"
 
+
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FMultiPlayerSubsystemOnCreateSessionComplete, bool, bWasSuccessful);
+DECLARE_MULTICAST_DELEGATE_TwoParams(FMultiPlayerSubsystemOnFindSessionsComplete, const TArray<FOnlineSessionSearchResult>& SessionResult, bool bWasSuccessful);
+DECLARE_MULTICAST_DELEGATE_OneParam(FMultiPlayerSubsystemOnJoinSessionComplete, EOnJoinSessionCompleteResult::Type Result);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FMultiPlayerSubsystemOnStartSessionComplete, bool, bWasSuccessful);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FMultiPlayerSubsystemOnDestroySessionComplete, bool, bWasSuccessful);
 /**
  * 
  */
@@ -20,9 +26,18 @@ public:
 
 	void CreateSession(int32 NumPublicConnections, const FString& MatchType);
 	void FindSessions(int32 MaxSearchResult);
-	void JoinSession(const FOnlineSessionSearch& SearchResult);
+	void JoinSession(const FOnlineSessionSearchResult& SearchResult);
 	void StartSession();
 	void DestroySession();
+
+	//
+	// Multiplayer Session Subsystem's Delegate for callbacks to be bind
+	//
+	FMultiPlayerSubsystemOnCreateSessionComplete MultiPlayerOnCreateSessionComplete;
+	FMultiPlayerSubsystemOnFindSessionsComplete MultiPlayerOnFindSessionsComplete;
+	FMultiPlayerSubsystemOnJoinSessionComplete MultiPlayerOnJoinSessionComplete;
+	FMultiPlayerSubsystemOnStartSessionComplete MultiPlayerOnStartSessionComplete;
+	FMultiPlayerSubsystemOnDestroySessionComplete MultiPlayerOnDestroySessionComplete;
 
 protected:
 	//
@@ -37,6 +52,7 @@ protected:
 private:
 	IOnlineSessionPtr SessionInterface;
 	TSharedPtr<FOnlineSessionSettings> LastSessionSettings;
+	TSharedPtr<FOnlineSessionSearch> LastSessionSearch;
 
 	FOnCreateSessionCompleteDelegate CreateSessionCompleteDelegate;
 	FOnFindSessionsCompleteDelegate FindSessionsCompleteDelegate;
