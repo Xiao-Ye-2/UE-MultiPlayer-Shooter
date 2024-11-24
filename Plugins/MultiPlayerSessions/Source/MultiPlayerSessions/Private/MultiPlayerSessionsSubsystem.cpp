@@ -48,7 +48,7 @@ void UMultiPlayerSessionsSubsystem::CreateSession(int32 NumPublicConnections, co
 	LastSessionSettings->bShouldAdvertise = true;
 	LastSessionSettings->bUsesPresence = true;
 	LastSessionSettings->bUseLobbiesIfAvailable = true;
-	LastSessionSettings->BuildUniqueId = true;
+	LastSessionSettings->BuildUniqueId = 1;
 	LastSessionSettings->Set(FName("MatchType"), MatchType, EOnlineDataAdvertisementType::ViaOnlineServiceAndPing);
 
 	const ULocalPlayer* LocalPlayer = GetWorld()->GetFirstLocalPlayerFromController();
