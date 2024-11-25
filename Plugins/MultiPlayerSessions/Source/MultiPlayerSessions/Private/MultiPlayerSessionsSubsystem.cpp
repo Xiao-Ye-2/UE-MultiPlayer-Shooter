@@ -91,7 +91,7 @@ void UMultiPlayerSessionsSubsystem::JoinSession(const FOnlineSessionSearchResult
 	JoinSessionCompleteDelegateHandle = SessionInterface->AddOnJoinSessionCompleteDelegate_Handle(JoinSessionCompleteDelegate);
 
 	const ULocalPlayer* LocalPlayer = GetWorld()->GetFirstLocalPlayerFromController();
-	if (!SessionInterface->JoinSession(*LocalPlayer->GetCachedUniqueNetId(), NAME_GameSession, SearchResult))
+	if (!SessionInterface->JoinSession(*LocalPlayer->GetPreferredUniqueNetId(), NAME_GameSession, SearchResult))
 	{
 		SessionInterface->ClearOnJoinSessionCompleteDelegate_Handle(JoinSessionCompleteDelegateHandle);
 	}
@@ -160,6 +160,8 @@ void UMultiPlayerSessionsSubsystem::OnJoinSessionComplete(FName SessionName, EOn
 	}
 	// Broadcast its own delegates
 	MultiPlayerOnJoinSessionComplete.Broadcast(Result);
+	GEngine->AddOnScreenDebugMessage(-1, 60.0f, FColor::Cyan,
+		FString::Printf(TEXT("Callback broadcast triggered")));
 }
 
 void UMultiPlayerSessionsSubsystem::OnStartSessionComplete(FName SessionName, bool bWasSuccessful)
