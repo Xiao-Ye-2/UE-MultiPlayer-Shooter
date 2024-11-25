@@ -109,16 +109,19 @@ void UMenu::OnJoinSession(EOnJoinSessionCompleteResult::Type Result)
 	if (Subsystem)
 	{
 		IOnlineSessionPtr SessionInterface = Subsystem->GetSessionInterface();
-		if (!SessionInterface.IsValid()) return;
-		
-		FString Address;
-		SessionInterface->GetResolvedConnectString(NAME_GameSession, Address);
-		APlayerController* PlayerController = GetGameInstance()->GetFirstLocalPlayerController();
-		if (PlayerController)
+		if (SessionInterface.IsValid())
 		{
-			PlayerController->ClientTravel(Address, ETravelType::TRAVEL_Absolute);
+			FString Address;
+			SessionInterface->GetResolvedConnectString(NAME_GameSession, Address);
+
+			APlayerController* PlayerController = GetGameInstance()->GetFirstLocalPlayerController();
+			if (PlayerController)
+			{
+				PlayerController->ClientTravel(Address, ETravelType::TRAVEL_Absolute);
+			}
 		}
 	}
+	
 	if (Result != EOnJoinSessionCompleteResult::Success)
 	{
 		JoinButton->SetIsEnabled(true);
