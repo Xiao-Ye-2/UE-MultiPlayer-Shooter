@@ -160,8 +160,6 @@ void UMultiPlayerSessionsSubsystem::OnJoinSessionComplete(FName SessionName, EOn
 	}
 	// Broadcast its own delegates
 	MultiPlayerOnJoinSessionComplete.Broadcast(Result);
-	GEngine->AddOnScreenDebugMessage(-1, 60.0f, FColor::Cyan,
-		FString::Printf(TEXT("Callback broadcast triggered")));
 }
 
 void UMultiPlayerSessionsSubsystem::OnStartSessionComplete(FName SessionName, bool bWasSuccessful)
