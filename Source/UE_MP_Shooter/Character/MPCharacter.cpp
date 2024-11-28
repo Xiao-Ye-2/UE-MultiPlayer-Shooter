@@ -25,15 +25,52 @@ void AMPCharacter::BeginPlay()
 	
 }
 
+void AMPCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
+{
+	Super::SetupPlayerInputComponent(PlayerInputComponent);
+
+	PlayerInputComponent->BindAction("Jump", IE_Pressed, this, &AMPCharacter::Jump);
+
+	PlayerInputComponent->BindAxis("MoveForward", this, &AMPCharacter::MoveForward);
+	PlayerInputComponent->BindAxis("MoveRight", this, &AMPCharacter::MoveRight);
+	PlayerInputComponent->BindAxis("LookUp", this, &AMPCharacter::LookUp);
+	PlayerInputComponent->BindAxis("Turn", this, &AMPCharacter::Turn);
+}
+
+void AMPCharacter::MoveForward(float Value)
+{
+	if (Controller != nullptr && Value != 0.0f)
+	{
+		const FRotator YawRotation(0.f, Controller->GetControlRotation().Yaw, 0.f);
+		const FVector Direction( FRotationMatrix(YawRotation).GetUnitAxis(EAxis::X) );
+		AddMovementInput(Direction, Value);
+	}
+}
+
+void AMPCharacter::MoveRight(float Value)
+{
+	if (Controller != nullptr && Value != 0.0f)
+	{
+		const FRotator YawRotation(0.f, Controller->GetControlRotation().Yaw, 0.f);
+		const FVector Direction( FRotationMatrix(YawRotation).GetUnitAxis(EAxis::Y) );
+		AddMovementInput(Direction, Value);
+	}
+}
+
+void AMPCharacter::LookUp(float Value)
+{
+	AddControllerPitchInput(Value);
+}
+
+void AMPCharacter::Turn(float Value)
+{
+	AddControllerYawInput(Value);
+}
+
 void AMPCharacter::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
 
 }
 
-void AMPCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
-{
-	Super::SetupPlayerInputComponent(PlayerInputComponent);
-
-}
 
