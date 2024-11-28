@@ -2,7 +2,10 @@
 
 
 #include "MPCharacter.h"
+
+#include "Blueprint/UserWidget.h"
 #include "Camera/CameraComponent.h"
+#include "Components/WidgetComponent.h"
 #include "GameFramework/CharacterMovementComponent.h"
 #include "GameFramework/SpringArmComponent.h"
 
@@ -21,6 +24,9 @@ AMPCharacter::AMPCharacter()
 
 	bUseControllerRotationYaw = false;
 	GetCharacterMovement()->bOrientRotationToMovement = true;
+
+	OverheadWidget = CreateDefaultSubobject<UWidgetComponent>(TEXT("OverheadWidget"));
+	OverheadWidget->SetupAttachment(RootComponent);
 }
 
 void AMPCharacter::BeginPlay()
