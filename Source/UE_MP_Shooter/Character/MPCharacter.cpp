@@ -3,11 +3,13 @@
 
 #include "MPCharacter.h"
 
-#include "Blueprint/UserWidget.h"
 #include "Camera/CameraComponent.h"
 #include "Components/WidgetComponent.h"
 #include "GameFramework/CharacterMovementComponent.h"
 #include "GameFramework/SpringArmComponent.h"
+#include "Net/UnrealNetwork.h"
+#include "UE_MP_Shooter/MPComponents/CombatComponent.h"
+#include "UE_MP_Shooter/Weapon/Weapon.h"
 
 AMPCharacter::AMPCharacter()
 {
@@ -27,11 +29,27 @@ AMPCharacter::AMPCharacter()
 
 	OverheadWidget = CreateDefaultSubobject<UWidgetComponent>(TEXT("OverheadWidget"));
 	OverheadWidget->SetupAttachment(RootComponent);
+
+	CombatComponent = CreateDefaultSubobject<UCombatComponent>(TEXT("CombatComponent"));
+	CombatComponent->SetIsReplicated(true);
 }
+
+void AMPCharacter::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
+{
+	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
+	DOREPLIFETIME_CONDITION(AMPCharacter, OverlappingWeapon, COND_OwnerOnly);
+}
+
 
 void AMPCharacter::BeginPlay()
 {
 	Super::BeginPlay();
+	
+}
+
+void AMPCharacter::Tick(float DeltaTime)
+{
+	Super::Tick(DeltaTime);
 	
 }
 
@@ -45,6 +63,18 @@ void AMPCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCompone
 	PlayerInputComponent->BindAxis("MoveRight", this, &AMPCharacter::MoveRight);
 	PlayerInputComponent->BindAxis("LookUp", this, &AMPCharacter::LookUp);
 	PlayerInputComponent->BindAxis("Turn", this, &AMPCharacter::Turn);
+
+	PlayerInputComponent->BindAction("Equip", IE_Pressed, this, &AMPCharacter::EquipButtonPressed);
+}
+
+void AMPCharacter::PostInitializeComponents()
+{
+	Super::PostInitializeComponents();
+
+	if (CombatComponent)
+	{
+		CombatComponent->Character = this;
+	}
 }
 
 void AMPCharacter::MoveForward(float Value)
@@ -77,10 +107,52 @@ void AMPCharacter::Turn(float Value)
 	AddControllerYawInput(Value);
 }
 
-void AMPCharacter::Tick(float DeltaTime)
+void AMPCharacter::EquipButtonPressed()
 {
-	Super::Tick(DeltaTime);
+	if (CombatComponent)
+	{
+		if (HasAuthority())
+		{
+			CombatComponent->EquipWeapon(OverlappingWeapon);
+		}
+		else
+		{
+			ServerEquipButtonPressed();
+		}
+	}
+}
 
+void AMPCharacter::ServerEquipButtonPressed_Implementation()
+{
+	if (CombatComponent)
+	{
+		CombatComponent->EquipWeapon(OverlappingWeapon);
+	}
+}
+
+void AMPCharacter::SetOverlappingWeapon(AWeapon* Weapon)
+{
+	if (OverlappingWeapon)
+	{
+		OverlappingWeapon->ShowPickupWidget(false);
+	}
+	OverlappingWeapon = Weapon;
+	if (IsLocallyControlled() && OverlappingWeapon)
+	{
+		OverlappingWeapon->ShowPickupWidget(true);
+	}
+}
+
+void AMPCharacter::OnRep_OverlappingWeapon(AWeapon* LastWeapon) const
+{
+	if (OverlappingWeapon)
+	{
+		OverlappingWeapon->ShowPickupWidget(true);
+	}
+	if (LastWeapon)
+	{
+		LastWeapon->ShowPickupWidget(false);
+	}
 }
 
 
