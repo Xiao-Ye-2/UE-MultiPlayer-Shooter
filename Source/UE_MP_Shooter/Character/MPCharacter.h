@@ -4,6 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "GameFramework/Character.h"
+#include "UE_MP_Shooter/MPTypes/TurningInPlace.h"
 #include "MPCharacter.generated.h"
 
 UCLASS()
@@ -31,6 +32,7 @@ protected:
 	void AimButtonPressed();
 	void AimButtonReleased();
 	void AimOffset(float DeltaTime);
+	virtual void Jump() override;
 
 private:
 	UPROPERTY(VisibleAnywhere, Category = Camera)
@@ -55,8 +57,12 @@ private:
 	void ServerEquipButtonPressed();
 
 	float AO_Yaw;
+	float Interp_AO_Yaw;
 	float AO_Pitch;
 	FRotator StartingAimRotation;
+
+	ETurningInPlace TurningInPlace;
+	void TurnInPlace(float DeltaTime);
 
 public:	
 	void SetOverlappingWeapon(AWeapon* Weapon);
@@ -64,5 +70,6 @@ public:
 	bool IsAiming();
 	FORCEINLINE float GetAO_Yaw() const { return AO_Yaw; }
 	FORCEINLINE float GetAO_Pitch() const { return AO_Pitch; }
-
+	AWeapon* GetEquippedWeapon();
+	FORCEINLINE ETurningInPlace GetTurningInPlace() const { return TurningInPlace; }
 };

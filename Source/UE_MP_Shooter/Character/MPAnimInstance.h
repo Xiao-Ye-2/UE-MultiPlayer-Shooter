@@ -4,11 +4,11 @@
 
 #include "CoreMinimal.h"
 #include "Animation/AnimInstance.h"
+#include "UE_MP_Shooter/MPTypes/TurningInPlace.h"
 #include "MPAnimInstance.generated.h"
 
-/**
- * 
- */
+class AMPCharacter;
+
 UCLASS()
 class UE_MP_SHOOTER_API UMPAnimInstance : public UAnimInstance
 {
@@ -20,7 +20,7 @@ public:
 
 private:
 	UPROPERTY(BlueprintReadOnly, Category = Character, meta = (AllowPrivateAccess = true))
-	class AMPCharacter* MPCharacter;
+	AMPCharacter* MPCharacter;
 
 	UPROPERTY(BlueprintReadOnly, Category = Movement, meta = (AllowPrivateAccess = true))
 	float Speed;
@@ -33,6 +33,8 @@ private:
 	
 	UPROPERTY(BlueprintReadOnly, Category = Movement, meta = (AllowPrivateAccess = true))
 	bool bWeaponEquipped;
+
+	class AWeapon* EquippedWeapon;
 
 	UPROPERTY(BlueprintReadOnly, Category = Movement, meta = (AllowPrivateAccess = true))
 	bool bIsCrouched;
@@ -55,4 +57,10 @@ private:
 
 	UPROPERTY(BlueprintReadOnly, Category = Movement, meta = (AllowPrivateAccess = true))
 	float AO_Pitch;
+
+	UPROPERTY(BlueprintReadOnly, Category = Movement, meta = (AllowPrivateAccess = true))
+	FTransform LeftHandTransform;
+
+	UPROPERTY(BlueprintReadOnly, Category = Movement, meta = (AllowPrivateAccess = true))
+	ETurningInPlace TurningInPlace;
 };

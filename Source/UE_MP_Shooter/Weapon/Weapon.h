@@ -65,4 +65,5 @@ public:
 	void OnWeaponStateSet();
 	void OnEquipped();
 	FORCEINLINE USphereComponent* GetAreaSphere() { return AreaSphere; }
+	FORCEINLINE USkeletalMeshComponent* GetWeaponMesh() const { return WeaponMesh; }
 };

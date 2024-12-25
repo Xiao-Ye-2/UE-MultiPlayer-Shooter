@@ -38,6 +38,11 @@ AMPCharacter::AMPCharacter()
 	GetCharacterMovement()->NavAgentProps.bCanCrouch = true;
 	GetCapsuleComponent()->SetCollisionResponseToChannel(ECC_Camera, ECR_Ignore);
 	GetMesh()->SetCollisionResponseToChannel(ECC_Camera, ECR_Ignore);
+	GetCharacterMovement()->RotationRate = FRotator(0.f, 850.f, 0.f);
+
+	TurningInPlace = ETurningInPlace::ETIP_NotTurning;
+	NetUpdateFrequency = 66.f;
+	MinNetUpdateFrequency = 33.f;
 }
 
 void AMPCharacter::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
@@ -182,19 +187,57 @@ void AMPCharacter::AimOffset(float DeltaTime)
 		FRotator CurrentRotation = FRotator(0.f, GetBaseAimRotation().Yaw, 0.f);
 		FRotator DeltaRotation = UKismetMathLibrary::NormalizedDeltaRotator(CurrentRotation, StartingAimRotation);
 		AO_Yaw = DeltaRotation.Yaw;
-		bUseControllerRotationYaw = false;
+		if (TurningInPlace == ETurningInPlace::ETIP_NotTurning)
+		{
+			Interp_AO_Yaw = AO_Yaw;
+		}
+		TurnInPlace(DeltaTime);
 	} else
 	{
 		StartingAimRotation = FRotator(0.f, GetBaseAimRotation().Yaw, 0.f);
 		AO_Yaw = 0.f;
-		bUseControllerRotationYaw = true;
+		TurningInPlace = ETurningInPlace::ETIP_NotTurning;
 	}
+	
 	AO_Pitch = GetBaseAimRotation().Pitch;
 	if (AO_Pitch > 90.f && !IsLocallyControlled()) // Data compression when passing around by client and server
 	{
 		FVector2d InRange(270.f, 360.f);
 		FVector2d OutRange(-90.f, 0.f);
 		AO_Pitch = FMath::GetMappedRangeValueClamped(InRange, OutRange, AO_Pitch);
+	}
+}
+
+void AMPCharacter::Jump()
+{
+	if (bIsCrouched)
+	{
+		UnCrouch();
+	} else
+	{
+		Super::Jump();
+	}
+}
+
+void AMPCharacter::TurnInPlace(float DeltaTime)
+{
+	if (AO_Yaw > 90.f)
+	{
+		TurningInPlace = ETurningInPlace::ETIP_Right;
+	}
+	else if (AO_Yaw < -90.f)
+	{
+		TurningInPlace = ETurningInPlace::ETIP_Left;
+	}
+	if (TurningInPlace != ETurningInPlace::ETIP_NotTurning)
+	{
+		Interp_AO_Yaw = FMath::FInterpTo(Interp_AO_Yaw, 0.f, DeltaTime, 4.f);
+		AO_Yaw = Interp_AO_Yaw;
+		if (FMath::Abs(AO_Yaw) < 15.f)
+		{
+			TurningInPlace = ETurningInPlace::ETIP_NotTurning;
+			StartingAimRotation = FRotator(0.f, GetBaseAimRotation().Yaw, 0.f);
+		}
 	}
 }
 
@@ -231,4 +274,10 @@ bool AMPCharacter::IsWeaponEquipped()
 bool AMPCharacter::IsAiming()
 {
 	return (CombatComponent && CombatComponent->bAiming);
+}
+
+AWeapon* AMPCharacter::GetEquippedWeapon()
+{
+	if (CombatComponent == nullptr) return nullptr;
+	return CombatComponent->EquippedWeapon;
 }
