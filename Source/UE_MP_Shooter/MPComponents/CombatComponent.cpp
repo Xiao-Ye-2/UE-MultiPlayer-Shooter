@@ -7,6 +7,8 @@
 #include "Kismet/GameplayStatics.h"
 #include "Net/UnrealNetwork.h"
 #include "UE_MP_Shooter/Character/MPCharacter.h"
+#include "UE_MP_Shooter/HUD/MPHUD.h"
+#include "UE_MP_Shooter/PlayerController/MPPlayerController.h"
 #include "UE_MP_Shooter/Weapon/Weapon.h"
 
 UCombatComponent::UCombatComponent()
@@ -32,6 +34,53 @@ void UCombatComponent::BeginPlay()
 	{
 		Character->GetCharacterMovement()->MaxWalkSpeed = BaseWalkSpeed;
 	}
+}
+
+void UCombatComponent::TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction)
+{
+	Super::TickComponent(DeltaTime, TickType, ThisTickFunction);
+
+	SetHUBCrosshairs(DeltaTime);
+	if (Character && Character->IsLocallyControlled())
+	{
+		FHitResult Hit;
+		TraceUnderCrosshairs(Hit);
+		HitTarget = Hit.ImpactPoint;
+	}
+}
+
+void UCombatComponent::SetHUBCrosshairs(float DeltaTime)
+{
+	if (Character == nullptr || Character->Controller == nullptr) return;
+
+	PlayerController = PlayerController == nullptr ? Cast<AMPPlayerController>(Character->Controller) : PlayerController;
+	if (PlayerController == nullptr) return;
+	
+	HUD = HUD == nullptr ? Cast<AMPHUD>(PlayerController->GetHUD()) : HUD;
+	if (HUD == nullptr) return;
+
+	FHUDPackage HUDPackage;
+	HUDPackage.CrosshairCenter = EquippedWeapon ? EquippedWeapon->CrosshairCenter : nullptr;
+	HUDPackage.CrosshairLeft = EquippedWeapon ? EquippedWeapon->CrosshairLeft : nullptr;
+	HUDPackage.CrosshairRight = EquippedWeapon ? EquippedWeapon->CrosshairRight : nullptr;
+	HUDPackage.CrosshairTop = EquippedWeapon ? EquippedWeapon->CrosshairTop : nullptr;
+	HUDPackage.CrosshairBottom = EquippedWeapon ? EquippedWeapon->CrosshairBottom : nullptr;
+
+	FVector2d SpeedRange = FVector2d(0.f, Character->bIsCrouched ? Character->GetCharacterMovement()->MaxWalkSpeedCrouched : Character->GetCharacterMovement()->MaxWalkSpeed);
+	FVector Velocity = Character->GetVelocity();
+	Velocity.Z = 0.f;
+	
+	CrosshairVelocityFactor = FMath::GetMappedRangeValueClamped(SpeedRange, FVector2d(0.f, 1.f), Velocity.Size());
+	if (Character->GetCharacterMovement()->IsFalling())
+	{
+		CrosshairInAirFactor = FMath::FInterpTo(CrosshairInAirFactor, 2.25f, DeltaTime, 2.25f);
+	}
+	else
+	{
+		CrosshairInAirFactor = FMath::FInterpTo(CrosshairInAirFactor, 0.f, DeltaTime, 30.f);
+	}
+	HUDPackage.CrosshairSpread = CrosshairVelocityFactor + CrosshairInAirFactor;
+	HUD->SetHUDPackage(HUDPackage);
 }
 
 void UCombatComponent::SetAiming(bool bIsAiming)
@@ -112,12 +161,6 @@ void UCombatComponent::MulticastFire_Implementation(const FVector_NetQuantize& T
 		Character->PlayFireMontage(bAiming);
 		EquippedWeapon->Fire(TraceHitTarget);
 	}
-}
-
-void UCombatComponent::TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction)
-{
-	Super::TickComponent(DeltaTime, TickType, ThisTickFunction);
-	
 }
 
 void UCombatComponent::EquipWeapon(AWeapon* WeaponToEquip)

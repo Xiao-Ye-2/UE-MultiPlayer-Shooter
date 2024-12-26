@@ -8,6 +8,8 @@
 
 #define TRACE_LENGTH 80000.f;
 
+class AMPPlayerController;
+class AMPHUD;
 class AWeapon;
 class AMPCharacter;
 
@@ -42,8 +44,12 @@ protected:
 	void MulticastFire(const FVector_NetQuantize& TraceHitTarget);
 
 	void TraceUnderCrosshairs(FHitResult& TraceHitResult);
+	
+	void SetHUBCrosshairs(float DeltaTime);
 private:
 	AMPCharacter* Character;
+	AMPPlayerController* PlayerController;
+	AMPHUD* HUD;
 
 	UPROPERTY(ReplicatedUsing = OnRep_EquippedWeapon)
 	AWeapon* EquippedWeapon;
@@ -58,6 +64,11 @@ private:
 	float AimWalkSpeed;
 
 	bool bFireButtonPressed;
+
+	float CrosshairVelocityFactor;
+	float CrosshairInAirFactor;
+
+	FVector HitTarget;
 	
 public:	
 

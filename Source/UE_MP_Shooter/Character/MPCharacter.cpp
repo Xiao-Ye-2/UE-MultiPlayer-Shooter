@@ -311,3 +311,8 @@ AWeapon* AMPCharacter::GetEquippedWeapon()
 	if (CombatComponent == nullptr) return nullptr;
 	return CombatComponent->EquippedWeapon;
 }
+
+FVector AMPCharacter::GetHitTarget() const
+{
+	return CombatComponent == nullptr ? FVector() : CombatComponent->HitTarget;
+}

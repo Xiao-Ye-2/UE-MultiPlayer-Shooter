@@ -36,6 +36,7 @@ void UMPAnimInstance::NativeUpdateAnimation(float DeltaSeconds)
 	bIsCrouched = MPCharacter->bIsCrouched;
 	bAiming = MPCharacter->IsAiming();
 	TurningInPlace = MPCharacter->GetTurningInPlace();
+	bLocallyControlled = MPCharacter->IsLocallyControlled();
 
 	FRotator AimRotation = MPCharacter->GetBaseAimRotation();
 	FRotator MovementRotation = UKismetMathLibrary::MakeRotFromX(MPCharacter->GetVelocity());
@@ -61,5 +62,11 @@ void UMPAnimInstance::NativeUpdateAnimation(float DeltaSeconds)
 		MPCharacter->GetMesh()->TransformToBoneSpace(FName("hand_r"), LeftHandTransform.GetLocation(), FRotator::ZeroRotator, OutPosition, OutRotation);
 		LeftHandTransform.SetLocation(OutPosition);
 		LeftHandTransform.SetRotation(FQuat(OutRotation));
+
+		if (MPCharacter->IsLocallyControlled())
+		{
+			FTransform RightHandTransform = EquippedWeapon->GetWeaponMesh()->GetSocketTransform(FName("hand_r"), RTS_World);
+			RightHandRotation = UKismetMathLibrary::FindLookAtRotation(RightHandTransform.GetLocation(), 2 * RightHandTransform.GetLocation() - MPCharacter->GetHitTarget());
+		}
 	}
 }
