@@ -4,6 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "Components/ActorComponent.h"
+#include "UE_MP_Shooter/HUD/MPHUD.h"
 #include "CombatComponent.generated.h"
 
 #define TRACE_LENGTH 80000.f;
@@ -65,10 +66,29 @@ private:
 
 	bool bFireButtonPressed;
 
+	/**
+	 *  HUD and Crosshairs
+	 */
 	float CrosshairVelocityFactor;
 	float CrosshairInAirFactor;
-
+	float CrosshairAimFactor;
+	float CrosshairShootingFactor;
 	FVector HitTarget;
+	FHUDPackage HUDPackage;
+
+	/**
+	 *  FOV and Aim
+	 */
+	float DefaultFOV;
+	float CurrentFOV;
+	
+	// UPROPERTY(EditAnywhere, Category = "Combat")
+	// float ZoomedFOV = 30.f;
+
+	UPROPERTY(EditAnywhere, Category = "Combat")
+	float UnZoomInterpSpeed = 20.f;
+
+	void InterpFOV(float DeltaTime);
 	
 public:	
 

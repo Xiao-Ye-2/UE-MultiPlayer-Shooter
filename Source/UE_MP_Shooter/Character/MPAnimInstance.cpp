@@ -66,7 +66,8 @@ void UMPAnimInstance::NativeUpdateAnimation(float DeltaSeconds)
 		if (MPCharacter->IsLocallyControlled())
 		{
 			FTransform RightHandTransform = EquippedWeapon->GetWeaponMesh()->GetSocketTransform(FName("hand_r"), RTS_World);
-			RightHandRotation = UKismetMathLibrary::FindLookAtRotation(RightHandTransform.GetLocation(), 2 * RightHandTransform.GetLocation() - MPCharacter->GetHitTarget());
+			FRotator LookAtRotation = UKismetMathLibrary::FindLookAtRotation(RightHandTransform.GetLocation(), 2 * RightHandTransform.GetLocation() - MPCharacter->GetHitTarget());
+			RightHandRotation = FMath::RInterpTo(RightHandRotation, LookAtRotation, DeltaSeconds, 20.f);
 		}
 	}
 }

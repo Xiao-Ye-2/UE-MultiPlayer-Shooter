@@ -30,13 +30,13 @@ void AMPHUD::DrawHUD()
 		{
 			if (Crosshair)
 			{
-				DrawCrosshair(Crosshair, ViewportCenter, Spread);
+				DrawCrosshair(Crosshair, ViewportCenter, Spread, HUDPackage.CrosshairColor);
 			}
 		}
 	}
 }
 
-void AMPHUD::DrawCrosshair(UTexture2D* Texture, FVector2D ViewportCenter, FVector2d Spread)
+void AMPHUD::DrawCrosshair(UTexture2D* Texture, FVector2D ViewportCenter, FVector2d Spread, FLinearColor Color)
 {
 	const float TextureWidth = Texture->GetSizeX();
 	const float TextureHeight = Texture->GetSizeY();
@@ -44,5 +44,5 @@ void AMPHUD::DrawCrosshair(UTexture2D* Texture, FVector2D ViewportCenter, FVecto
 
 	DrawTexture(Texture, DrawPoint.X, DrawPoint.Y, TextureWidth, TextureHeight,
 		0.f, 0.f, 1.f, 1.f,
-		FLinearColor::White);
+		Color);
 }
