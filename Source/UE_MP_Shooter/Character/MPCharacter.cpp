@@ -10,6 +10,7 @@
 #include "GameFramework/SpringArmComponent.h"
 #include "Kismet/KismetMathLibrary.h"
 #include "Net/UnrealNetwork.h"
+#include "UE_MP_Shooter/UE_MP_Shooter.h"
 #include "UE_MP_Shooter/MPComponents/CombatComponent.h"
 #include "UE_MP_Shooter/Weapon/Weapon.h"
 
@@ -37,6 +38,7 @@ AMPCharacter::AMPCharacter()
 
 	GetCharacterMovement()->NavAgentProps.bCanCrouch = true;
 	GetCapsuleComponent()->SetCollisionResponseToChannel(ECC_Camera, ECR_Ignore);
+	GetMesh()->SetCollisionObjectType(ECC_SkeletalMesh);
 	GetMesh()->SetCollisionResponseToChannel(ECC_Camera, ECR_Ignore);
 	GetMesh()->SetCollisionResponseToChannel(ECC_Visibility, ECR_Block);
 	GetCharacterMovement()->RotationRate = FRotator(0.f, 850.f, 0.f);
@@ -50,6 +52,7 @@ void AMPCharacter::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLife
 {
 	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
 	DOREPLIFETIME_CONDITION(AMPCharacter, OverlappingWeapon, COND_OwnerOnly);
+	DOREPLIFETIME(AMPCharacter, Health);
 }
 
 
@@ -63,7 +66,16 @@ void AMPCharacter::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
 
-	AimOffset(DeltaTime);
+	if (GetLocalRole() > ROLE_SimulatedProxy && IsLocallyControlled())
+	{
+		AimOffset(DeltaTime);
+	}
+	else
+	{
+		TimeSinceLastMovementReplication += DeltaTime;
+		if (TimeSinceLastMovementReplication > 0.25f) OnRep_ReplicatedMovement();
+		CalculateAO_Pitch();
+	}
 	HideCameraIfCharacterClose();
 }
 
@@ -116,6 +128,14 @@ void AMPCharacter::PostInitializeComponents()
 	{
 		CombatComponent->Character = this;
 	}
+}
+
+void AMPCharacter::OnRep_ReplicatedMovement()
+{
+	Super::OnRep_ReplicatedMovement();
+
+	SimProxiesTurn();
+	TimeSinceLastMovementReplication = 0.f;
 }
 
 void AMPCharacter::MultiCastHit_Implementation()
@@ -228,17 +248,23 @@ void AMPCharacter::AimButtonReleased()
 	}
 }
 
+float AMPCharacter::CalculateSpeed() const
+{
+	FVector Velocity = GetVelocity();
+	Velocity.Z = 0.0f;
+	return Velocity.Size();
+}
+
 void AMPCharacter::AimOffset(float DeltaTime)
 {
 	if (CombatComponent == nullptr || CombatComponent->EquippedWeapon == nullptr) return;
-	FVector Velocity = GetVelocity();
-	Velocity.Z = 0.0f;
-	float Speed = Velocity.Size();
+	float Speed = CalculateSpeed();
 	bool bIsInAir = GetCharacterMovement()->IsFalling();
 	// bUseControllerRotationYaw = true;
 
 	if (Speed == 0.f && !bIsInAir)
 	{
+		bRotateRootBone = true;
 		FRotator CurrentRotation = FRotator(0.f, GetBaseAimRotation().Yaw, 0.f);
 		FRotator DeltaRotation = UKismetMathLibrary::NormalizedDeltaRotator(CurrentRotation, StartingAimRotation);
 		AO_Yaw = DeltaRotation.Yaw;
@@ -249,11 +275,36 @@ void AMPCharacter::AimOffset(float DeltaTime)
 		TurnInPlace(DeltaTime);
 	} else
 	{
+		bRotateRootBone = false;
 		StartingAimRotation = FRotator(0.f, GetBaseAimRotation().Yaw, 0.f);
 		AO_Yaw = 0.f;
 		TurningInPlace = ETurningInPlace::ETIP_NotTurning;
 	}
 	
+	CalculateAO_Pitch();
+}
+
+void AMPCharacter::SimProxiesTurn()
+{
+	if (CombatComponent == nullptr || CombatComponent->EquippedWeapon == nullptr) return;
+	bRotateRootBone = false;
+	TurningInPlace = ETurningInPlace::ETIP_NotTurning;
+	
+	if (CalculateSpeed() > 0.f) return;
+
+	ProxyRotationLastFrame = ProxyRotation;
+	ProxyRotation = GetActorRotation();
+	ProxyYaw = UKismetMathLibrary::NormalizedDeltaRotator(ProxyRotation, ProxyRotationLastFrame).Yaw;
+	if (FMath::Abs(ProxyYaw) > TurnThreshold)
+	{
+		TurningInPlace = ProxyYaw > 0
+			                 ? ETurningInPlace::ETIP_Right
+			                 : ETurningInPlace::ETIP_Left;
+	}
+}
+
+void AMPCharacter::CalculateAO_Pitch()
+{
 	AO_Pitch = GetBaseAimRotation().Pitch;
 	if (AO_Pitch > 90.f && !IsLocallyControlled()) // Data compression when passing around by client and server
 	{
@@ -312,6 +363,7 @@ void AMPCharacter::TurnInPlace(float DeltaTime)
 	}
 }
 
+
 void AMPCharacter::SetOverlappingWeapon(AWeapon* Weapon)
 {
 	if (OverlappingWeapon)
@@ -335,6 +387,10 @@ void AMPCharacter::OnRep_OverlappingWeapon(AWeapon* LastWeapon) const
 	{
 		LastWeapon->ShowPickupWidget(false);
 	}
+}
+
+void AMPCharacter::OnRep_Health()
+{
 }
 
 bool AMPCharacter::IsWeaponEquipped()

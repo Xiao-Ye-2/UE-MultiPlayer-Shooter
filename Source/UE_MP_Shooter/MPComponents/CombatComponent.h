@@ -36,6 +36,7 @@ protected:
 
 	UFUNCTION()
 	void OnRep_EquippedWeapon();
+	void Fire();
 
 	void FireButtonPressed(bool bPressed);
 
@@ -82,14 +83,20 @@ private:
 	float DefaultFOV;
 	float CurrentFOV;
 	
-	// UPROPERTY(EditAnywhere, Category = "Combat")
-	// float ZoomedFOV = 30.f;
-
 	UPROPERTY(EditAnywhere, Category = "Combat")
 	float UnZoomInterpSpeed = 20.f;
 
 	void InterpFOV(float DeltaTime);
-	
+
+	/**
+	 * Automatic Fire
+	 */
+	FTimerHandle FireTimerHandle;
+
+	UPROPERTY(EditAnywhere, Category = "Combat")
+	bool bCanFire = true;
+	void StartFireTimer();
+	void FireTimerFinished();
 public:	
 
 		
