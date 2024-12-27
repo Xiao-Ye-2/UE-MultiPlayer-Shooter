@@ -11,12 +11,15 @@
 #include "Kismet/KismetMathLibrary.h"
 #include "Net/UnrealNetwork.h"
 #include "UE_MP_Shooter/UE_MP_Shooter.h"
+#include "UE_MP_Shooter/GameMode/BlasterGameMode.h"
 #include "UE_MP_Shooter/MPComponents/CombatComponent.h"
+#include "UE_MP_Shooter/PlayerController/MPPlayerController.h"
 #include "UE_MP_Shooter/Weapon/Weapon.h"
 
 AMPCharacter::AMPCharacter()
 {
 	PrimaryActorTick.bCanEverTick = true;
+	SpawnCollisionHandlingMethod = ESpawnActorCollisionHandlingMethod::AdjustIfPossibleButAlwaysSpawn;
 
 	CameraBoom = CreateDefaultSubobject<USpringArmComponent>(TEXT("CameraBoom"));
 	CameraBoom->SetupAttachment(GetMesh());
@@ -55,11 +58,15 @@ void AMPCharacter::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLife
 	DOREPLIFETIME(AMPCharacter, Health);
 }
 
-
 void AMPCharacter::BeginPlay()
 {
 	Super::BeginPlay();
-	
+
+	UpdateHUDHealth();
+	if (HasAuthority())
+	{
+		OnTakeAnyDamage.AddDynamic(this, &ThisClass::ReceiveDamage);
+	}
 }
 
 void AMPCharacter::Tick(float DeltaTime)
@@ -138,9 +145,25 @@ void AMPCharacter::OnRep_ReplicatedMovement()
 	TimeSinceLastMovementReplication = 0.f;
 }
 
-void AMPCharacter::MultiCastHit_Implementation()
+void AMPCharacter::Eliminate()
 {
-	PlayHitReactMontage();
+	MulticastEliminate();
+	GetWorldTimerManager().SetTimer(EliminatedTimer, this, &ThisClass::EliminateTimerFinished, EliminateDelay);
+}
+
+void AMPCharacter::MulticastEliminate_Implementation()
+{
+	bEliminated = true;
+	PlayElimMontage();
+}
+
+void AMPCharacter::EliminateTimerFinished()
+{
+	ABlasterGameMode* BlasterGameMode = GetWorld()->GetAuthGameMode<ABlasterGameMode>();
+	if (BlasterGameMode)
+	{
+		BlasterGameMode->RequestRespawn(this, Controller);
+	}
 }
 
 void AMPCharacter::PlayFireMontage(bool bAiming)
@@ -152,6 +175,15 @@ void AMPCharacter::PlayFireMontage(bool bAiming)
 		AnimInstance->Montage_Play(FireWeaponMontage);
 		FName SectionName = bAiming ? FName("RifleAim") : FName("RifleHip");
 		AnimInstance->Montage_JumpToSection(SectionName);
+	}
+}
+
+void AMPCharacter::PlayElimMontage()
+{
+	UAnimInstance* AnimInstance = GetMesh()->GetAnimInstance();
+	if (AnimInstance && ElimMontage)
+	{
+		AnimInstance->Montage_Play(ElimMontage);
 	}
 }
 
@@ -195,6 +227,17 @@ void AMPCharacter::LookUp(float Value)
 void AMPCharacter::Turn(float Value)
 {
 	AddControllerYawInput(Value);
+}
+
+void AMPCharacter::Jump()
+{
+	if (bIsCrouched)
+	{
+		UnCrouch();
+	} else
+	{
+		Super::Jump();
+	}
 }
 
 void AMPCharacter::EquipButtonPressed()
@@ -314,33 +357,6 @@ void AMPCharacter::CalculateAO_Pitch()
 	}
 }
 
-void AMPCharacter::Jump()
-{
-	if (bIsCrouched)
-	{
-		UnCrouch();
-	} else
-	{
-		Super::Jump();
-	}
-}
-
-void AMPCharacter::FireButtonPressed()
-{
-	if (CombatComponent)
-	{
-		CombatComponent->FireButtonPressed(true);
-	}
-}
-
-void AMPCharacter::FireButtonReleased()
-{
-	if (CombatComponent)
-	{
-		CombatComponent->FireButtonPressed(false);
-	}
-}
-
 void AMPCharacter::TurnInPlace(float DeltaTime)
 {
 	if (AO_Yaw > 90.f)
@@ -363,6 +379,40 @@ void AMPCharacter::TurnInPlace(float DeltaTime)
 	}
 }
 
+void AMPCharacter::FireButtonPressed()
+{
+	if (CombatComponent)
+	{
+		CombatComponent->FireButtonPressed(true);
+	}
+}
+
+void AMPCharacter::FireButtonReleased()
+{
+	if (CombatComponent)
+	{
+		CombatComponent->FireButtonPressed(false);
+	}
+}
+
+void AMPCharacter::ReceiveDamage(AActor* DamageActor, float Damage, const UDamageType* DamageType,
+	AController* InstigatorController, AActor* DamageCauser)
+{
+	Health = FMath::Clamp(Health - Damage, 0.f, MaxHealth);
+	PlayHitReactMontage();
+	UpdateHUDHealth();
+
+	if (Health <= 0.f)
+	{
+		ABlasterGameMode* BlasterGameMode = GetWorld()->GetAuthGameMode<ABlasterGameMode>();
+		if (BlasterGameMode)
+		{
+			MPPlayerController = MPPlayerController == nullptr ? Cast<AMPPlayerController>(Controller) : MPPlayerController;
+			AMPPlayerController* AttackerController = Cast<AMPPlayerController>(InstigatorController);
+			BlasterGameMode->PlayerEliminated(this, MPPlayerController, AttackerController);
+		}
+	}
+}
 
 void AMPCharacter::SetOverlappingWeapon(AWeapon* Weapon)
 {
@@ -391,6 +441,17 @@ void AMPCharacter::OnRep_OverlappingWeapon(AWeapon* LastWeapon) const
 
 void AMPCharacter::OnRep_Health()
 {
+	PlayHitReactMontage();
+	UpdateHUDHealth();
+}
+
+void AMPCharacter::UpdateHUDHealth()
+{
+	MPPlayerController = MPPlayerController == nullptr ? Cast<AMPPlayerController>(GetController()) : MPPlayerController;
+	if (MPPlayerController)
+	{
+		MPPlayerController->SetHUDHealth(Health, MaxHealth);
+	}
 }
 
 bool AMPCharacter::IsWeaponEquipped()

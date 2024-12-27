@@ -59,11 +59,6 @@ void AProjectile::Destroyed()
 void AProjectile::OnHit(UPrimitiveComponent* HitComp, AActor* OtherActor, UPrimitiveComponent* OtherComp,
 	FVector NormalImpluse, const FHitResult& Hit)
 {
-	AMPCharacter* MPCharacter = Cast<AMPCharacter>(OtherActor);
-	if (MPCharacter)
-	{
-		MPCharacter->MultiCastHit();
-	}
 	Destroy();
 }
 

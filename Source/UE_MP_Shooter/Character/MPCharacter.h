@@ -8,6 +8,8 @@
 #include "UE_MP_Shooter/MPTypes/TurningInPlace.h"
 #include "MPCharacter.generated.h"
 
+class AMPPlayerController;
+
 UCLASS()
 class UE_MP_SHOOTER_API AMPCharacter : public ACharacter, public  IInteractWithCrosshairInterface
 {
@@ -20,11 +22,12 @@ public:
 	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
 	virtual void PostInitializeComponents() override;
 	void PlayFireMontage(bool bAiming);
-	
-	UFUNCTION(NetMulticast, Unreliable)
-	void MultiCastHit();
-
+	void PlayElimMontage();
 	virtual void OnRep_ReplicatedMovement() override;
+
+	void Eliminate();
+	UFUNCTION(NetMulticast, Reliable)
+	void MulticastEliminate();
 
 protected:
 	virtual void BeginPlay() override;
@@ -45,6 +48,10 @@ protected:
 	virtual void Jump() override;
 	void FireButtonPressed();
 	void FireButtonReleased();
+	void UpdateHUDHealth();
+
+	UFUNCTION()
+	void ReceiveDamage(AActor* DamageActor, float Damage, const UDamageType* DamageType, AController* InstigatorController, AActor* DamageCauser);
 
 private:
 	UPROPERTY(VisibleAnywhere, Category = Camera)
@@ -81,6 +88,10 @@ private:
 
 	UPROPERTY(EditAnywhere, Category = Combat)
 	UAnimMontage* HitReactMontage;
+
+	UPROPERTY(EditAnywhere, Category = Combat)
+	UAnimMontage* ElimMontage;
+	
 	void PlayHitReactMontage();
 
 	UPROPERTY(EditAnywhere, Category = Combat)
@@ -105,6 +116,15 @@ private:
 
 	UFUNCTION()
 	void OnRep_Health();
+
+	AMPPlayerController* MPPlayerController;
+	bool bEliminated = false;
+
+	FTimerHandle EliminatedTimer;
+	UPROPERTY(EditDefaultsOnly, Category = "Player Stats")
+	float EliminateDelay = 3.f;
+	void EliminateTimerFinished();
+	
 public:	
 	void SetOverlappingWeapon(AWeapon* Weapon);
 	bool IsWeaponEquipped();
@@ -116,4 +136,5 @@ public:
 	FVector GetHitTarget() const;
 	FORCEINLINE UCameraComponent* GetFollowCamera() const { return FollowCamera; }
 	FORCEINLINE bool ShouldRotateRootBone() const { return bRotateRootBone; }
+	FORCEINLINE bool IsEliminated() const { return bEliminated; }
 };

@@ -38,6 +38,7 @@ void UMPAnimInstance::NativeUpdateAnimation(float DeltaSeconds)
 	TurningInPlace = MPCharacter->GetTurningInPlace();
 	bLocallyControlled = MPCharacter->IsLocallyControlled();
 	bRotateRootBone = MPCharacter->ShouldRotateRootBone();
+	bEliminated = MPCharacter->IsEliminated();
 
 	FRotator AimRotation = MPCharacter->GetBaseAimRotation();
 	FRotator MovementRotation = UKismetMathLibrary::MakeRotFromX(MPCharacter->GetVelocity());

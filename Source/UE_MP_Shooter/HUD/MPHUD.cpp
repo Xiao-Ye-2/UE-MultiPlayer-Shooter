@@ -1,9 +1,28 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 
+#include <vector>
 
 #include "MPHUD.h"
 
-#include <vector>
+#include "CharacterOverlay.h"
+#include "Blueprint/UserWidget.h"
+
+void AMPHUD::BeginPlay()
+{
+	Super::BeginPlay();
+
+	AddCharacterOverlay();
+}
+
+void AMPHUD::AddCharacterOverlay()
+{
+	APlayerController* PlayerController = GetOwningPlayerController();
+	if (PlayerController && CharacterOverlayClass)
+	{
+		CharacterOverlay = CreateWidget<UCharacterOverlay>(PlayerController, CharacterOverlayClass);
+		CharacterOverlay->AddToViewport();
+	}
+}
 
 void AMPHUD::DrawHUD()
 {

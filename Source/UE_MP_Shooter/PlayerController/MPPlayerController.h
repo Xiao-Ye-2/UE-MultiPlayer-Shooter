@@ -6,6 +6,7 @@
 #include "GameFramework/PlayerController.h"
 #include "MPPlayerController.generated.h"
 
+class AMPHUD;
 /**
  * 
  */
@@ -13,5 +14,13 @@ UCLASS()
 class UE_MP_SHOOTER_API AMPPlayerController : public APlayerController
 {
 	GENERATED_BODY()
-	
+
+public:
+	void SetHUDHealth(float Health, float MaxHealth);
+
+protected:
+	virtual void BeginPlay() override;
+
+private:
+	AMPHUD* MPHUD;
 };
