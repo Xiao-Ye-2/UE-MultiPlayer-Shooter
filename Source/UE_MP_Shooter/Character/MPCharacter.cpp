@@ -118,6 +118,11 @@ void AMPCharacter::PostInitializeComponents()
 	}
 }
 
+void AMPCharacter::MultiCastHit_Implementation()
+{
+	PlayHitReactMontage();
+}
+
 void AMPCharacter::PlayFireMontage(bool bAiming)
 {
 	if (CombatComponent == nullptr || CombatComponent->EquippedWeapon == nullptr) return;
@@ -230,6 +235,7 @@ void AMPCharacter::AimOffset(float DeltaTime)
 	Velocity.Z = 0.0f;
 	float Speed = Velocity.Size();
 	bool bIsInAir = GetCharacterMovement()->IsFalling();
+	// bUseControllerRotationYaw = true;
 
 	if (Speed == 0.f && !bIsInAir)
 	{

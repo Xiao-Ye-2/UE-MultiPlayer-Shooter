@@ -61,7 +61,7 @@ void AProjectile::OnHit(UPrimitiveComponent* HitComp, AActor* OtherActor, UPrimi
 	AMPCharacter* MPCharacter = Cast<AMPCharacter>(OtherActor);
 	if (MPCharacter)
 	{
-		MPCharacter->PlayHitReactMontage();
+		MPCharacter->MultiCastHit();
 	}
 	Destroy();
 }

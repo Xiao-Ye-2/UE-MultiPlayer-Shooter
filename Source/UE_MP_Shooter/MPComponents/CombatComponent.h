@@ -46,7 +46,7 @@ protected:
 
 	void TraceUnderCrosshairs(FHitResult& TraceHitResult);
 	
-	void SetHUBCrosshairs(float DeltaTime);
+	void SetHUDCrosshairs(float DeltaTime);
 private:
 	AMPCharacter* Character;
 	AMPPlayerController* PlayerController;

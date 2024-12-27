@@ -46,9 +46,9 @@ void UCombatComponent::BeginPlay()
 void UCombatComponent::TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction)
 {
 	Super::TickComponent(DeltaTime, TickType, ThisTickFunction);
-
+	
 	if (Character == nullptr || !Character->IsLocallyControlled()) return;
-	SetHUBCrosshairs(DeltaTime);
+	SetHUDCrosshairs(DeltaTime);
 	
 	FHitResult Hit;
 	TraceUnderCrosshairs(Hit);
@@ -57,7 +57,7 @@ void UCombatComponent::TickComponent(float DeltaTime, ELevelTick TickType, FActo
 	InterpFOV(DeltaTime);
 }
 
-void UCombatComponent::SetHUBCrosshairs(float DeltaTime)
+void UCombatComponent::SetHUDCrosshairs(float DeltaTime)
 {
 	if (Character == nullptr || Character->Controller == nullptr) return;
 
