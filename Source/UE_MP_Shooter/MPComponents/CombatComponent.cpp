@@ -13,6 +13,7 @@
 #include "UE_MP_Shooter/PlayerController/MPPlayerController.h"
 #include "UE_MP_Shooter/Weapon/Weapon.h"
 #include "TimerManager.h"
+#include "Sound/SoundCue.h"
 
 UCombatComponent::UCombatComponent()
 {
@@ -101,6 +102,10 @@ void UCombatComponent::FireTimerFinished()
 	{
 		Fire();
 	}
+	if (EquippedWeapon->IsEmpty())
+	{
+		Reload();
+	}
 }
 
 void UCombatComponent::ServerFire_Implementation(const FVector_NetQuantize& TraceHitTarget)
@@ -125,17 +130,15 @@ void UCombatComponent::EquipWeapon(AWeapon* WeaponToEquip)
 		EquippedWeapon->Drop();
 	}
 	EquippedWeapon = WeaponToEquip;
-	EquippedWeapon->SetWeaponState(EWeaponStates::EWS_Equipped);
-	const USkeletalMeshSocket* HandSocket = Character->GetMesh()->GetSocketByName(FName("RightHandSocket"));
-	if (HandSocket)
-	{
-		HandSocket->AttachActor(EquippedWeapon, Character->GetMesh());
-	}
 	EquippedWeapon->SetOwner(Character);
 	EquippedWeapon->SetHUDWeaponAmmo();
-	Character->GetCharacterMovement()->bOrientRotationToMovement = false;
-	Character->bUseControllerRotationYaw = true;
 
+	OnRep_EquippedWeapon();
+	if (EquippedWeapon->IsEmpty())
+	{
+		Reload();
+	}
+	
 	EWeaponType EquippedWeaponType = EquippedWeapon->GetWeaponType();
 	if (!CarriedAmmoMap.Contains(EquippedWeaponType)) return;
 	CarriedAmmo = CarriedAmmoMap[EquippedWeaponType];
@@ -144,16 +147,19 @@ void UCombatComponent::EquipWeapon(AWeapon* WeaponToEquip)
 
 void UCombatComponent::OnRep_EquippedWeapon()
 {
-	if (EquippedWeapon && Character)
+	if (EquippedWeapon == nullptr || Character == nullptr) return;
+	
+	EquippedWeapon->SetWeaponState(EWeaponStates::EWS_Equipped);
+	const USkeletalMeshSocket* HandSocket = Character->GetMesh()->GetSocketByName(FName("RightHandSocket"));
+	if (HandSocket)
 	{
-		EquippedWeapon->SetWeaponState(EWeaponStates::EWS_Equipped);
-		const USkeletalMeshSocket* HandSocket = Character->GetMesh()->GetSocketByName(FName("RightHandSocket"));
-		if (HandSocket)
-		{
-			HandSocket->AttachActor(EquippedWeapon, Character->GetMesh());
-		}
-		Character->GetCharacterMovement()->bOrientRotationToMovement = false;
-		Character->bUseControllerRotationYaw = true;
+		HandSocket->AttachActor(EquippedWeapon, Character->GetMesh());
+	}
+	Character->GetCharacterMovement()->bOrientRotationToMovement = false;
+	Character->bUseControllerRotationYaw = true;
+	if (EquippedWeapon->EquipSound)
+	{
+		UGameplayStatics::PlaySoundAtLocation(this, EquippedWeapon->EquipSound, Character->GetActorLocation());
 	}
 }
 

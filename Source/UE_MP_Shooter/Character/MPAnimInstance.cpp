@@ -74,4 +74,6 @@ void UMPAnimInstance::NativeUpdateAnimation(float DeltaSeconds)
 	}
 
 	bUseFABRIK = MPCharacter->GetCombatState() != ECombatStates::ECS_Reloading;
+	bUseAimOffsets = MPCharacter->GetCombatState() != ECombatStates::ECS_Reloading;
+	bTransformRightHand = MPCharacter->GetCombatState() != ECombatStates::ECS_Reloading;
 }

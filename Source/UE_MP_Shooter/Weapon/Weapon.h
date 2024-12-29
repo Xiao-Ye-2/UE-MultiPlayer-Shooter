@@ -59,6 +59,8 @@ public:
 	UPROPERTY(EditAnywhere, Category = "Combat")
 	bool bAutomatic = true;
 
+	UPROPERTY(EditAnywhere, Category = "Combat")
+	USoundCue* EquipSound;
 protected:
 	virtual void BeginPlay() override;
 
