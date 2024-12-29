@@ -28,6 +28,7 @@ public:
 	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
 	void EquipWeapon(AWeapon* WeaponToEquip);
 	void Reload();
+	void UpdateAmmoAfterReload();
 	UFUNCTION(BlueprintCallable)
 	void FinishReloading();
 protected:
@@ -52,6 +53,7 @@ protected:
 	UFUNCTION(Server, Reliable)
 	void ServerReload();
 	void HandleReload();
+	int32 AmountToReload();
 
 	void TraceUnderCrosshairs(FHitResult& TraceHitResult);
 	

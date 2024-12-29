@@ -37,6 +37,7 @@ public:
 	virtual void Fire(const FVector& HitTarget);
 	void Drop();
 	void SetHUDWeaponAmmo();
+	void AddAmmo(int32 Amount);
 
 	/**
 	 * Textures for the weapon crosshairs
@@ -134,6 +135,8 @@ public:
 	FORCEINLINE USkeletalMeshComponent* GetWeaponMesh() const { return WeaponMesh; }
 	FORCEINLINE float GetZoomedFOV() const { return ZoomedFOV; }
 	FORCEINLINE float GetZoomInterpSpeed() const { return ZoomInterpSpeed; }
-	FORCEINLINE bool IsEmpty() const { return Ammo <= 0; }
 	FORCEINLINE EWeaponType GetWeaponType() const { return WeaponType; }
+	FORCEINLINE int32 GetMagCapacity() const { return MagCapacity; }
+	FORCEINLINE int32 GetAmmo() const { return Ammo; }
+	FORCEINLINE bool IsEmpty() const { return Ammo <= 0; }
 };

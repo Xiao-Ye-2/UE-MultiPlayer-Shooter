@@ -84,7 +84,7 @@ void UCombatComponent::Fire()
 bool UCombatComponent::CanFire() const
 {
 	if (EquippedWeapon == nullptr) return false;
-	return bCanFire && !EquippedWeapon->IsEmpty();
+	return bCanFire && !EquippedWeapon->IsEmpty() && CombatState == ECombatStates::ECS_Unoccupied;
 }
 
 void UCombatComponent::StartFireTimer()
@@ -110,7 +110,7 @@ void UCombatComponent::ServerFire_Implementation(const FVector_NetQuantize& Trac
 
 void UCombatComponent::MulticastFire_Implementation(const FVector_NetQuantize& TraceHitTarget)
 {
-	if (Character && EquippedWeapon)
+	if (Character && EquippedWeapon && CombatState == ECombatStates::ECS_Unoccupied)
 	{
 		Character->PlayFireMontage(bAiming);
 		EquippedWeapon->Fire(TraceHitTarget);
@@ -192,6 +192,9 @@ void UCombatComponent::OnRep_CombatState()
 	case ECombatStates::ECS_Reloading:
 		HandleReload();
 		break;
+	case ECombatStates::ECS_Unoccupied:
+		if (bFireButtonPressed) Fire();
+		break;
 	default:
 		break;
 	}
@@ -206,8 +209,39 @@ void UCombatComponent::HandleReload()
 void UCombatComponent::FinishReloading()
 {
 	if (Character == nullptr) return;
-	if (!Character->HasAuthority()) return;
-	CombatState = ECombatStates::ECS_Unoccupied;
+	if (Character->HasAuthority())
+	{
+		CombatState = ECombatStates::ECS_Unoccupied;
+		UpdateAmmoAfterReload();
+	}
+	if (bFireButtonPressed)
+	{
+		Fire();
+	}
+}
+
+void UCombatComponent::UpdateAmmoAfterReload()
+{
+	if (EquippedWeapon == nullptr) return;
+	int32 ReloadAmount = AmountToReload();
+	if (CarriedAmmoMap.Contains(EquippedWeapon->GetWeaponType()))
+	{
+		CarriedAmmoMap[EquippedWeapon->GetWeaponType()] -= ReloadAmount;
+		CarriedAmmo = CarriedAmmoMap[EquippedWeapon->GetWeaponType()];
+	}
+	EquippedWeapon->AddAmmo(ReloadAmount);
+	UpdateCarriedAmmoHUD();
+}
+
+int32 UCombatComponent::AmountToReload()
+{
+	if (EquippedWeapon == nullptr) return 0;
+	EWeaponType EquippedWeaponType = EquippedWeapon->GetWeaponType();
+	if (!CarriedAmmoMap.Contains(EquippedWeaponType)) return 0;
+
+	int32 RoomInMag = EquippedWeapon->GetMagCapacity() - EquippedWeapon->GetAmmo();
+	int32 AmountCarried = CarriedAmmoMap[EquippedWeaponType];
+	return FMath::Min(AmountCarried, RoomInMag);
 }
 
 void UCombatComponent::TraceUnderCrosshairs(FHitResult& TraceHitResult)
