@@ -5,6 +5,7 @@
 #include "CoreMinimal.h"
 #include "Components/ActorComponent.h"
 #include "UE_MP_Shooter/HUD/MPHUD.h"
+#include "UE_MP_Shooter/MPTypes/ECombatStates.h"
 #include "UE_MP_Shooter/Weapon/WeaponTypes.h"
 #include "CombatComponent.generated.h"
 
@@ -26,7 +27,9 @@ public:
 	virtual void TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) override;
 	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
 	void EquipWeapon(AWeapon* WeaponToEquip);
-
+	void Reload();
+	UFUNCTION(BlueprintCallable)
+	void FinishReloading();
 protected:
 	virtual void BeginPlay() override;
 	void SetAiming(bool bIsAiming);
@@ -45,6 +48,10 @@ protected:
 	void ServerFire(const FVector_NetQuantize& TraceHitTarget);
 	UFUNCTION(NetMulticast, Reliable)
 	void MulticastFire(const FVector_NetQuantize& TraceHitTarget);
+
+	UFUNCTION(Server, Reliable)
+	void ServerReload();
+	void HandleReload();
 
 	void TraceUnderCrosshairs(FHitResult& TraceHitResult);
 	
@@ -107,18 +114,21 @@ private:
 	 */
 	UPROPERTY(ReplicatedUsing = OnRep_CarriedAmmo)
 	int32 CarriedAmmo;
-
 	UFUNCTION()
 	void OnRep_CarriedAmmo();
 
 	TMap<EWeaponType, int32> CarriedAmmoMap;
-
 	UPROPERTY(EditAnywhere)
 	int32 InitialCarriedAmmo = 30;
 	void InitializeCarriedAmmo();
 	void UpdateCarriedAmmoHUD();
-	
+
+	UPROPERTY(ReplicatedUsing = OnRep_CombatState)
+	ECombatStates CombatState = ECombatStates::ECS_Unoccupied;
+	UFUNCTION()
+	void OnRep_CombatState();
 public:	
 
 		
 };
+

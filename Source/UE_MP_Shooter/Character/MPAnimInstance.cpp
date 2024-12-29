@@ -72,4 +72,6 @@ void UMPAnimInstance::NativeUpdateAnimation(float DeltaSeconds)
 			RightHandRotation = FMath::RInterpTo(RightHandRotation, LookAtRotation, DeltaSeconds, 20.f);
 		}
 	}
+
+	bUseFABRIK = MPCharacter->GetCombatState() != ECombatStates::ECS_Reloading;
 }

@@ -28,6 +28,7 @@ void UCombatComponent::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& Out
 	DOREPLIFETIME(UCombatComponent, EquippedWeapon);
 	DOREPLIFETIME(UCombatComponent, bAiming);
 	DOREPLIFETIME_CONDITION(UCombatComponent, CarriedAmmo, COND_OwnerOnly);
+	DOREPLIFETIME(UCombatComponent, CombatState);
 }
 
 void UCombatComponent::BeginPlay()
@@ -171,6 +172,42 @@ void UCombatComponent::UpdateCarriedAmmoHUD()
 	PlayerController = PlayerController == nullptr ? Cast<AMPPlayerController>(Character->GetController()) : PlayerController;
 	if (PlayerController == nullptr) return;
 	PlayerController->SetHUDCarriedAmmo(CarriedAmmo);
+}
+
+void UCombatComponent::Reload()
+{
+	if (CarriedAmmo <= 0 || CombatState == ECombatStates::ECS_Reloading) return;
+	ServerReload();
+}
+
+void UCombatComponent::ServerReload_Implementation()
+{
+	CombatState = ECombatStates::ECS_Reloading;
+	HandleReload();
+}
+void UCombatComponent::OnRep_CombatState()
+{
+	switch (CombatState)
+	{
+	case ECombatStates::ECS_Reloading:
+		HandleReload();
+		break;
+	default:
+		break;
+	}
+}
+
+void UCombatComponent::HandleReload()
+{
+	if (Character == nullptr) return;
+	Character->PlayReloadMontage();
+}
+
+void UCombatComponent::FinishReloading()
+{
+	if (Character == nullptr) return;
+	if (!Character->HasAuthority()) return;
+	CombatState = ECombatStates::ECS_Unoccupied;
 }
 
 void UCombatComponent::TraceUnderCrosshairs(FHitResult& TraceHitResult)

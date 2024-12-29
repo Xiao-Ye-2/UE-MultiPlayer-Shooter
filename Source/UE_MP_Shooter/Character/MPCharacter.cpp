@@ -155,6 +155,8 @@ void AMPCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCompone
 
 	PlayerInputComponent->BindAction("Fire", IE_Pressed, this, &AMPCharacter::FireButtonPressed);
 	PlayerInputComponent->BindAction("Fire", IE_Released, this, &AMPCharacter::FireButtonReleased);
+
+	PlayerInputComponent->BindAction("Reload", IE_Pressed, this, &AMPCharacter::ReloadButtonPressed);
 }
 
 void AMPCharacter::PostInitializeComponents()
@@ -245,6 +247,27 @@ void AMPCharacter::PlayFireMontage(bool bAiming)
 	{
 		AnimInstance->Montage_Play(FireWeaponMontage);
 		FName SectionName = bAiming ? FName("RifleAim") : FName("RifleHip");
+		AnimInstance->Montage_JumpToSection(SectionName);
+	}
+}
+
+void AMPCharacter::PlayReloadMontage()
+{
+	if (CombatComponent == nullptr || CombatComponent->EquippedWeapon == nullptr) return;
+	UAnimInstance* AnimInstance = GetMesh()->GetAnimInstance();
+	if (AnimInstance && ReloadMontage)
+	{
+		AnimInstance->Montage_Play(ReloadMontage);
+		FName SectionName;
+		switch (CombatComponent->EquippedWeapon->GetWeaponType())
+		{
+		case EWeaponType::EWT_AssaultRifle:
+			SectionName = FName("Rifle");
+			break;
+		default:
+			SectionName = FName("Rifle");
+			break;
+		}
 		AnimInstance->Montage_JumpToSection(SectionName);
 	}
 }
@@ -343,6 +366,14 @@ void AMPCharacter::CrouchButtonPressed()
 	else
 	{
 		Crouch();
+	}
+}
+
+void AMPCharacter::ReloadButtonPressed()
+{
+	if (CombatComponent)
+	{
+		CombatComponent->Reload();
 	}
 }
 
@@ -555,11 +586,15 @@ bool AMPCharacter::IsAiming()
 
 AWeapon* AMPCharacter::GetEquippedWeapon()
 {
-	if (CombatComponent == nullptr) return nullptr;
-	return CombatComponent->EquippedWeapon;
+	return CombatComponent == nullptr ? nullptr : CombatComponent->EquippedWeapon;
 }
 
 FVector AMPCharacter::GetHitTarget() const
 {
 	return CombatComponent == nullptr ? FVector() : CombatComponent->HitTarget;
+}
+
+ECombatStates AMPCharacter::GetCombatState() const
+{
+	return CombatComponent == nullptr ? ECombatStates::ECS_MAX : CombatComponent->CombatState;
 }
