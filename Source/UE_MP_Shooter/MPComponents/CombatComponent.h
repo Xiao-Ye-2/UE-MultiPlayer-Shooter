@@ -5,6 +5,7 @@
 #include "CoreMinimal.h"
 #include "Components/ActorComponent.h"
 #include "UE_MP_Shooter/HUD/MPHUD.h"
+#include "UE_MP_Shooter/Weapon/WeaponTypes.h"
 #include "CombatComponent.generated.h"
 
 #define TRACE_LENGTH 80000.f;
@@ -24,7 +25,6 @@ public:
 	friend AMPCharacter;
 	virtual void TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) override;
 	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
-
 	void EquipWeapon(AWeapon* WeaponToEquip);
 
 protected:
@@ -39,6 +39,7 @@ protected:
 	void Fire();
 
 	void FireButtonPressed(bool bPressed);
+	bool CanFire() const;
 
 	UFUNCTION(Server, Reliable)
 	void ServerFire(const FVector_NetQuantize& TraceHitTarget);
@@ -100,6 +101,23 @@ private:
 	bool bCanFire = true;
 	void StartFireTimer();
 	void FireTimerFinished();
+
+	/**
+	 * Ammos
+	 */
+	UPROPERTY(ReplicatedUsing = OnRep_CarriedAmmo)
+	int32 CarriedAmmo;
+
+	UFUNCTION()
+	void OnRep_CarriedAmmo();
+
+	TMap<EWeaponType, int32> CarriedAmmoMap;
+
+	UPROPERTY(EditAnywhere)
+	int32 InitialCarriedAmmo = 30;
+	void InitializeCarriedAmmo();
+	void UpdateCarriedAmmoHUD();
+	
 public:	
 
 		

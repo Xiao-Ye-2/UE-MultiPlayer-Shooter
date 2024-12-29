@@ -179,7 +179,7 @@ void AMPCharacter::Eliminate()
 {
 	if (CombatComponent && CombatComponent->EquippedWeapon)
 	{
-		CombatComponent->EquippedWeapon->Dropped();
+		CombatComponent->EquippedWeapon->Drop();
 	}
 	MulticastEliminate();
 	GetWorldTimerManager().SetTimer(EliminatedTimer, this, &ThisClass::EliminateTimerFinished, EliminateDelay);
@@ -187,6 +187,10 @@ void AMPCharacter::Eliminate()
 
 void AMPCharacter::MulticastEliminate_Implementation()
 {
+	if (MPPlayerController)
+	{
+		MPPlayerController->SetHUDWeaponAmmo(0);
+	}
 	bEliminated = true;
 	PlayElimMontage();
 

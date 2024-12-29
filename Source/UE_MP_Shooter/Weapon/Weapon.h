@@ -3,9 +3,12 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "WeaponTypes.h"
 #include "GameFramework/Actor.h"
 #include "Weapon.generated.h"
 
+class AMPPlayerController;
+class AMPCharacter;
 class ACasing;
 class UWidgetComponent;
 class UAnimationAsset;
@@ -29,9 +32,11 @@ public:
 	AWeapon();
 	virtual void Tick(float DeltaTime) override;
 	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
+	virtual void OnRep_Owner() override;
 	void ShowPickupWidget(bool bShowWidget);
 	virtual void Fire(const FVector& HitTarget);
-	void Dropped();
+	void Drop();
+	void SetHUDWeaponAmmo();
 
 	/**
 	 * Textures for the weapon crosshairs
@@ -82,6 +87,8 @@ private:
 	EWeaponStates WeaponState;
 	UFUNCTION()
 	void OnRep_WeaponState();
+	void OnEquipped();
+	void OnDropped();
 
 	UPROPERTY(VisibleAnywhere, Category = "Weapon Properties")
 	UWidgetComponent* PickupWidget;
@@ -97,14 +104,36 @@ private:
 
 	UPROPERTY(EditAnywhere)
 	float ZoomInterpSpeed = 20.f;
+
+	/**
+	 * Ammo Settings
+	 */
+	
+	UPROPERTY(EditAnywhere, ReplicatedUsing = OnRep_Ammo)
+	int32 Ammo;
+
+	UFUNCTION()
+	void OnRep_Ammo();
+	void SpendRound();
+	
+	UPROPERTY(EditAnywhere)
+	int32 MagCapacity;
+
+	UPROPERTY()
+	AMPCharacter* OwnerCharacter;
+	UPROPERTY()
+	AMPPlayerController* OwnerController;
+
+	UPROPERTY(EditAnywhere)
+	EWeaponType WeaponType;
 	
 public:
 	void SetWeaponState(EWeaponStates State);
 	void OnWeaponStateSet();
-	void OnEquipped();
-	void OnDropped();
 	FORCEINLINE USphereComponent* GetAreaSphere() { return AreaSphere; }
 	FORCEINLINE USkeletalMeshComponent* GetWeaponMesh() const { return WeaponMesh; }
 	FORCEINLINE float GetZoomedFOV() const { return ZoomedFOV; }
 	FORCEINLINE float GetZoomInterpSpeed() const { return ZoomInterpSpeed; }
+	FORCEINLINE bool IsEmpty() const { return Ammo <= 0; }
+	FORCEINLINE EWeaponType GetWeaponType() const { return WeaponType; }
 };
