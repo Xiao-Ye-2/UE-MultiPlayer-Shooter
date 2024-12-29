@@ -17,6 +17,7 @@
 #include "UE_MP_Shooter/GameMode/BlasterGameMode.h"
 #include "UE_MP_Shooter/MPComponents/CombatComponent.h"
 #include "UE_MP_Shooter/PlayerController/MPPlayerController.h"
+#include "UE_MP_Shooter/PlayerState/MPPlayerState.h"
 #include "UE_MP_Shooter/Weapon/Weapon.h"
 
 AMPCharacter::AMPCharacter()
@@ -99,6 +100,7 @@ void AMPCharacter::Tick(float DeltaTime)
 		CalculateAO_Pitch();
 	}
 	HideCameraIfCharacterClose();
+	PollAndInitialize();
 }
 
 void AMPCharacter::HideCameraIfCharacterClose() const
@@ -120,6 +122,19 @@ void AMPCharacter::HideCameraIfCharacterClose() const
 			CombatComponent->EquippedWeapon->GetWeaponMesh()->bOwnerNoSee = false;
 		}
 	}
+}
+
+void AMPCharacter::PollAndInitialize()
+{
+	if (PlayerState == nullptr)
+	{
+		PlayerState = GetPlayerState<AMPPlayerState>();
+		if (PlayerState)
+		{
+			PlayerState->AddToScore(0.f);
+		}
+	}
+	
 }
 
 void AMPCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)

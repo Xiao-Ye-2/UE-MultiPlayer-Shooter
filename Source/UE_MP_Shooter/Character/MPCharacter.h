@@ -9,6 +9,7 @@
 #include "UE_MP_Shooter/MPTypes/TurningInPlace.h"
 #include "MPCharacter.generated.h"
 
+class AMPPlayerState;
 class FOnTimelineFloat;
 class AMPPlayerController;
 
@@ -32,6 +33,8 @@ public:
 	UFUNCTION(NetMulticast, Reliable)
 	void MulticastEliminate();
 
+	AMPPlayerState* PlayerState;
+
 protected:
 	virtual void BeginPlay() override;
 
@@ -51,10 +54,13 @@ protected:
 	virtual void Jump() override;
 	void FireButtonPressed();
 	void FireButtonReleased();
+	void PlayHitReactMontage();
 	void UpdateHUDHealth();
 
 	UFUNCTION()
 	void ReceiveDamage(AActor* DamageActor, float Damage, const UDamageType* DamageType, AController* InstigatorController, AActor* DamageCauser);
+
+	void PollAndInitialize();
 
 private:
 	UPROPERTY(VisibleAnywhere, Category = Camera)
@@ -94,8 +100,6 @@ private:
 
 	UPROPERTY(EditAnywhere, Category = Combat)
 	UAnimMontage* ElimMontage;
-	
-	void PlayHitReactMontage();
 
 	UPROPERTY(EditAnywhere, Category = Combat)
 	float CameraThreshold;

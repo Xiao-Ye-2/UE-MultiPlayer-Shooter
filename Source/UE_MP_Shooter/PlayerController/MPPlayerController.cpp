@@ -38,3 +38,12 @@ void AMPPlayerController::SetHUDHealth(float Health, float MaxHealth)
 		MPHUD->CharacterOverlay->HealthText->SetText(FText::FromString(HealthText));
 	}
 }
+
+void AMPPlayerController::SetHUDScore(float Score)
+{
+	MPHUD = MPHUD == nullptr ? Cast<AMPHUD>(GetHUD()) : MPHUD;
+	if (MPHUD && MPHUD->CharacterOverlay && MPHUD->CharacterOverlay->ScoreAmount)
+	{
+		MPHUD->CharacterOverlay->ScoreAmount->SetText(FText::FromString(FString::FromInt(FMath::CeilToInt(Score))));
+	}
+}
