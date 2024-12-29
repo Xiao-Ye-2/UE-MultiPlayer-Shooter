@@ -33,7 +33,8 @@ public:
 	UFUNCTION(NetMulticast, Reliable)
 	void MulticastEliminate();
 
-	AMPPlayerState* PlayerState;
+	UPROPERTY()
+	AMPPlayerState* MPPlayerState;
 
 protected:
 	virtual void BeginPlay() override;
@@ -124,6 +125,7 @@ private:
 	UFUNCTION()
 	void OnRep_Health();
 
+	UPROPERTY()
 	AMPPlayerController* MPPlayerController;
 	bool bEliminated = false;
 

@@ -18,11 +18,13 @@ class UE_MP_SHOOTER_API AMPPlayerController : public APlayerController
 public:
 	void SetHUDHealth(float Health, float MaxHealth);
 	void SetHUDScore(float Score);
+	void SetHUDDefeats(int32 Defeats);
 	void virtual OnPossess(APawn* InPawn) override;
 
 protected:
 	virtual void BeginPlay() override;
 
 private:
+	UPROPERTY()
 	AMPHUD* MPHUD;
 };

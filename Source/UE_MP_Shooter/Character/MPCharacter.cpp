@@ -126,15 +126,15 @@ void AMPCharacter::HideCameraIfCharacterClose() const
 
 void AMPCharacter::PollAndInitialize()
 {
-	if (PlayerState == nullptr)
+	if (MPPlayerState == nullptr)
 	{
-		PlayerState = GetPlayerState<AMPPlayerState>();
-		if (PlayerState)
+		MPPlayerState = GetPlayerState<AMPPlayerState>();
+		if (MPPlayerState)
 		{
-			PlayerState->AddToScore(0.f);
+			MPPlayerState->AddToScore(0.f);
+			MPPlayerState->AddToDefeats(0);
 		}
 	}
-	
 }
 
 void AMPCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)

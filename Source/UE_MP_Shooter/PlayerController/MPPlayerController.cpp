@@ -47,3 +47,12 @@ void AMPPlayerController::SetHUDScore(float Score)
 		MPHUD->CharacterOverlay->ScoreAmount->SetText(FText::FromString(FString::FromInt(FMath::CeilToInt(Score))));
 	}
 }
+
+void AMPPlayerController::SetHUDDefeats(int32 Defeats)
+{
+	MPHUD = MPHUD == nullptr ? Cast<AMPHUD>(GetHUD()) : MPHUD;
+	if (MPHUD && MPHUD->CharacterOverlay && MPHUD->CharacterOverlay->DefeatsAmount)
+	{
+		MPHUD->CharacterOverlay->DefeatsAmount->SetText(FText::FromString(FString::FromInt(Defeats)));
+	}
+}

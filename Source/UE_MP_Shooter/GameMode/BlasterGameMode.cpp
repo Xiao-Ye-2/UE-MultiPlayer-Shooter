@@ -19,7 +19,10 @@ void ABlasterGameMode::PlayerEliminated(AMPCharacter* EliminatedCharacter,
 	{
 		AttackerPlayerState->AddToScore(1.f);
 	}
-	
+	if (EliminatedPlayerState)
+	{
+		EliminatedPlayerState->AddToDefeats(1);
+	}
 	if (EliminatedCharacter)
 	{
 		EliminatedCharacter->Eliminate();
