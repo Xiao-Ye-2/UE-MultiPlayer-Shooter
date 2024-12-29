@@ -49,6 +49,12 @@ void AWeapon::BeginPlay()
 	}
 }
 
+void AWeapon::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
+{
+	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
+	DOREPLIFETIME(AWeapon, WeaponState);
+}
+
 void AWeapon::OnSphereOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor,
 	UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
 {
@@ -74,13 +80,6 @@ void AWeapon::Tick(float DeltaTime)
 	Super::Tick(DeltaTime);
 
 }
-
-void AWeapon::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
-{
-	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
-	DOREPLIFETIME(AWeapon, WeaponState);
-}
-
 void AWeapon::OnRep_WeaponState()
 {
 	OnWeaponStateSet();
@@ -103,7 +102,7 @@ void AWeapon::OnWeaponStateSet()
 		// OnEquippedSecondary();
 		// break;
 	case EWeaponStates::EWS_Dropped:
-		// OnDropped();
+		OnDropped();
 		break;
 	}
 }
@@ -112,6 +111,20 @@ void AWeapon::OnEquipped()
 {
 	ShowPickupWidget(false);
 	AreaSphere->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+	WeaponMesh->SetSimulatePhysics(false);
+	WeaponMesh->SetEnableGravity(false);
+	WeaponMesh->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+}
+
+void AWeapon::OnDropped()
+{
+	if (HasAuthority())
+	{
+		AreaSphere->SetCollisionEnabled(ECollisionEnabled::QueryOnly);
+	}
+	WeaponMesh->SetSimulatePhysics(true);
+	WeaponMesh->SetEnableGravity(true);
+	WeaponMesh->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
 }
 
 
@@ -139,6 +152,14 @@ void AWeapon::Fire(const FVector& HitTarget)
 			World->SpawnActor<ACasing>(CasingClass, SocketTransform.GetLocation(), SocketTransform.GetRotation().Rotator());
 		}
 	}
+}
+
+void AWeapon::Dropped()
+{
+	SetWeaponState(EWeaponStates::EWS_Dropped);
+	FDetachmentTransformRules DetachRules(EDetachmentRule::KeepWorld, true);
+	WeaponMesh->DetachFromComponent(DetachRules);
+	SetOwner(nullptr);
 }
 
 

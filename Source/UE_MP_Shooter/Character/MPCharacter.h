@@ -3,11 +3,13 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "Components/TimelineComponent.h"
 #include "GameFramework/Character.h"
 #include "UE_MP_Shooter/Interfaces/InteractWithCrosshairInterface.h"
 #include "UE_MP_Shooter/MPTypes/TurningInPlace.h"
 #include "MPCharacter.generated.h"
 
+class FOnTimelineFloat;
 class AMPPlayerController;
 
 UCLASS()
@@ -24,6 +26,7 @@ public:
 	void PlayFireMontage(bool bAiming);
 	void PlayElimMontage();
 	virtual void OnRep_ReplicatedMovement() override;
+	virtual void Destroyed() override;
 
 	void Eliminate();
 	UFUNCTION(NetMulticast, Reliable)
@@ -124,6 +127,32 @@ private:
 	UPROPERTY(EditDefaultsOnly, Category = "Player Stats")
 	float EliminateDelay = 3.f;
 	void EliminateTimerFinished();
+
+	/**
+	 * Dissolve Effects and Elimination
+	 */
+	UPROPERTY(VisibleAnywhere)
+	UTimelineComponent* DissolveTimeline;
+	UPROPERTY(EditAnywhere)
+	UCurveFloat* DissolveCurve;
+	FOnTimelineFloat DissolveTrack;
+
+	UFUNCTION()
+	void UpdateDissolveMaterial(float DissolveValue);
+	void StartDissolve();
+
+	UPROPERTY(VisibleAnywhere, Category = "Elimination")
+	UMaterialInstanceDynamic* DynamicDissolveMaterialInstance;
+	UPROPERTY(EditAnywhere, Category = "Elimination")
+	UMaterialInstance* DissolveMaterialInstance;
+
+	UPROPERTY(VisibleAnywhere, Category = "Elimination")
+	UParticleSystemComponent* EliminationEffectComponent;
+	UPROPERTY(EditAnywhere, Category = "Elimination")
+	UParticleSystem* EliminationEffect;
+	UPROPERTY(EditAnywhere, Category = "Elimination")
+	USoundCue* EliminationEffectSound;
+	
 	
 public:	
 	void SetOverlappingWeapon(AWeapon* Weapon);
@@ -137,4 +166,6 @@ public:
 	FORCEINLINE UCameraComponent* GetFollowCamera() const { return FollowCamera; }
 	FORCEINLINE bool ShouldRotateRootBone() const { return bRotateRootBone; }
 	FORCEINLINE bool IsEliminated() const { return bEliminated; }
+	FORCEINLINE float GetHealth() const { return Health; }
+	FORCEINLINE float GetMaxHealth() const { return MaxHealth; }
 };

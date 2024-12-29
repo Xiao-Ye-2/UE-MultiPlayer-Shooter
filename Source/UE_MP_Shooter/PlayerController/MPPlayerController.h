@@ -17,6 +17,7 @@ class UE_MP_SHOOTER_API AMPPlayerController : public APlayerController
 
 public:
 	void SetHUDHealth(float Health, float MaxHealth);
+	void virtual OnPossess(APawn* InPawn) override;
 
 protected:
 	virtual void BeginPlay() override;

@@ -8,8 +8,11 @@
 #include "Components/WidgetComponent.h"
 #include "GameFramework/CharacterMovementComponent.h"
 #include "GameFramework/SpringArmComponent.h"
+#include "Kismet/GameplayStatics.h"
 #include "Kismet/KismetMathLibrary.h"
 #include "Net/UnrealNetwork.h"
+#include "Particles/ParticleSystemComponent.h"
+#include "Sound/SoundCue.h"
 #include "UE_MP_Shooter/UE_MP_Shooter.h"
 #include "UE_MP_Shooter/GameMode/BlasterGameMode.h"
 #include "UE_MP_Shooter/MPComponents/CombatComponent.h"
@@ -49,6 +52,8 @@ AMPCharacter::AMPCharacter()
 	TurningInPlace = ETurningInPlace::ETIP_NotTurning;
 	NetUpdateFrequency = 66.f;
 	MinNetUpdateFrequency = 33.f;
+
+	DissolveTimeline = CreateDefaultSubobject<UTimelineComponent>(TEXT("DissolveTimelineComponent"));
 }
 
 void AMPCharacter::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
@@ -66,6 +71,16 @@ void AMPCharacter::BeginPlay()
 	if (HasAuthority())
 	{
 		OnTakeAnyDamage.AddDynamic(this, &ThisClass::ReceiveDamage);
+	}
+}
+
+void AMPCharacter::Destroyed()
+{
+	Super::Destroyed();
+
+	if (EliminationEffectComponent)
+	{
+		EliminationEffectComponent->DestroyComponent();
 	}
 }
 
@@ -147,6 +162,10 @@ void AMPCharacter::OnRep_ReplicatedMovement()
 
 void AMPCharacter::Eliminate()
 {
+	if (CombatComponent && CombatComponent->EquippedWeapon)
+	{
+		CombatComponent->EquippedWeapon->Dropped();
+	}
 	MulticastEliminate();
 	GetWorldTimerManager().SetTimer(EliminatedTimer, this, &ThisClass::EliminateTimerFinished, EliminateDelay);
 }
@@ -155,6 +174,39 @@ void AMPCharacter::MulticastEliminate_Implementation()
 {
 	bEliminated = true;
 	PlayElimMontage();
+
+	// Dissolve Effects
+	if (DissolveMaterialInstance)
+	{
+		DynamicDissolveMaterialInstance = UMaterialInstanceDynamic::Create(DissolveMaterialInstance, this);
+		GetMesh()->SetMaterial(0, DynamicDissolveMaterialInstance);
+		DynamicDissolveMaterialInstance->SetScalarParameterValue(TEXT("Dissolve"), 0.55f);
+		// DynamicDissolveMaterialInstance->SetScalarParameterValue(TEXT("Glow"), 200.f);
+	}
+	StartDissolve();
+
+	// Disable Movement
+	GetCharacterMovement()->DisableMovement();
+	GetCharacterMovement()->StopMovementImmediately();
+	if (MPPlayerController)
+	{
+		DisableInput(MPPlayerController);
+	}
+	
+	// Disable Collision
+	GetCapsuleComponent()->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+	GetMesh()->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+
+	// Spawn Elimination Effect
+	if (EliminationEffect)
+	{
+		FVector EliminationEffectLocation(GetActorLocation().X, GetActorLocation().Y, GetActorLocation().Z + 200.f);
+		EliminationEffectComponent = UGameplayStatics::SpawnEmitterAtLocation(GetWorld(), EliminationEffect, EliminationEffectLocation, GetActorRotation());
+	}
+	if (EliminationEffectSound)
+	{
+		UGameplayStatics::SpawnSoundAtLocation(this, EliminationEffectSound, GetActorLocation());
+	}
 }
 
 void AMPCharacter::EliminateTimerFinished()
@@ -411,6 +463,24 @@ void AMPCharacter::ReceiveDamage(AActor* DamageActor, float Damage, const UDamag
 			AMPPlayerController* AttackerController = Cast<AMPPlayerController>(InstigatorController);
 			BlasterGameMode->PlayerEliminated(this, MPPlayerController, AttackerController);
 		}
+	}
+}
+
+void AMPCharacter::UpdateDissolveMaterial(float DissolveValue)
+{
+	if (DynamicDissolveMaterialInstance)
+	{
+		DynamicDissolveMaterialInstance->SetScalarParameterValue("Dissolve", DissolveValue);
+	}
+}
+
+void AMPCharacter::StartDissolve()
+{
+	DissolveTrack.BindDynamic(this, &ThisClass::UpdateDissolveMaterial);
+	if (DissolveCurve && DissolveTimeline)
+	{
+		DissolveTimeline->AddInterpFloat(DissolveCurve, DissolveTrack);
+		DissolveTimeline->Play();
 	}
 }
 

@@ -31,6 +31,7 @@ public:
 	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
 	void ShowPickupWidget(bool bShowWidget);
 	virtual void Fire(const FVector& HitTarget);
+	void Dropped();
 
 	/**
 	 * Textures for the weapon crosshairs
@@ -101,6 +102,7 @@ public:
 	void SetWeaponState(EWeaponStates State);
 	void OnWeaponStateSet();
 	void OnEquipped();
+	void OnDropped();
 	FORCEINLINE USphereComponent* GetAreaSphere() { return AreaSphere; }
 	FORCEINLINE USkeletalMeshComponent* GetWeaponMesh() const { return WeaponMesh; }
 	FORCEINLINE float GetZoomedFOV() const { return ZoomedFOV; }
