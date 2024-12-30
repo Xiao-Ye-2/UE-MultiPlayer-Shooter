@@ -29,6 +29,7 @@ public:
 	void EquipWeapon(AWeapon* WeaponToEquip);
 	void Reload();
 	void UpdateAmmoAfterReload();
+	void FireButtonPressed(bool bPressed);
 	UFUNCTION(BlueprintCallable)
 	void FinishReloading();
 protected:
@@ -41,8 +42,6 @@ protected:
 	UFUNCTION()
 	void OnRep_EquippedWeapon();
 	void Fire();
-
-	void FireButtonPressed(bool bPressed);
 	bool CanFire() const;
 
 	UFUNCTION(Server, Reliable)

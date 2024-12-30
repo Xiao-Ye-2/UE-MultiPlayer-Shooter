@@ -8,6 +8,11 @@
 #include "UE_MP_Shooter/Character/MPCharacter.h"
 #include "UE_MP_Shooter/PlayerState/MPPlayerState.h"
 
+namespace MatchState
+{
+	const FName Cooldown = FName("Cooldown");
+}
+
 ABlasterGameMode::ABlasterGameMode()
 {
 	bDelayedStart = true;
@@ -31,6 +36,20 @@ void ABlasterGameMode::Tick(float DeltaSeconds)
 		if (CountDownTime <= 0.f)
 		{
 			StartMatch();
+		}
+	} else if (MatchState == MatchState::InProgress)
+	{
+		CountDownTime = WarmupTime + MatchTime - (GetWorld()->GetTimeSeconds() - LevelStaringTime);
+		if (CountDownTime <= 0.f)
+		{
+			SetMatchState(MatchState::Cooldown);
+		}
+	} else if (MatchState == MatchState::Cooldown)
+	{
+		CountDownTime = WarmupTime + MatchTime + CooldownTime - (GetWorld()->GetTimeSeconds() - LevelStaringTime);
+		if (CountDownTime <= 0.f)
+		{
+			RestartGame();
 		}
 	}
 }

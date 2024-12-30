@@ -62,6 +62,7 @@ void AMPCharacter::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLife
 	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
 	DOREPLIFETIME_CONDITION(AMPCharacter, OverlappingWeapon, COND_OwnerOnly);
 	DOREPLIFETIME(AMPCharacter, Health);
+	DOREPLIFETIME(AMPCharacter, bDisableGameplay);
 }
 
 void AMPCharacter::BeginPlay()
@@ -83,12 +84,29 @@ void AMPCharacter::Destroyed()
 	{
 		EliminationEffectComponent->DestroyComponent();
 	}
+	if (CombatComponent && CombatComponent->EquippedWeapon)
+	{
+		CombatComponent->EquippedWeapon->Destroy();
+	}
 }
 
 void AMPCharacter::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
 
+	RotateInPlace(DeltaTime);
+	HideCameraIfCharacterClose();
+	PollAndInitialize();
+}
+
+void AMPCharacter::RotateInPlace(float DeltaTime)
+{
+	if (bDisableGameplay)
+	{
+		bUseControllerRotationYaw = false;
+		TurningInPlace = ETurningInPlace::ETIP_NotTurning;
+		return;
+	}
 	if (GetLocalRole() > ROLE_SimulatedProxy && IsLocallyControlled())
 	{
 		AimOffset(DeltaTime);
@@ -99,8 +117,6 @@ void AMPCharacter::Tick(float DeltaTime)
 		if (TimeSinceLastMovementReplication > 0.25f) OnRep_ReplicatedMovement();
 		CalculateAO_Pitch();
 	}
-	HideCameraIfCharacterClose();
-	PollAndInitialize();
 }
 
 void AMPCharacter::HideCameraIfCharacterClose() const
@@ -152,10 +168,8 @@ void AMPCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCompone
 	PlayerInputComponent->BindAction("Crouch", IE_Pressed, this, &AMPCharacter::CrouchButtonPressed);
 	PlayerInputComponent->BindAction("Aim", IE_Pressed, this, &AMPCharacter::AimButtonPressed);
 	PlayerInputComponent->BindAction("Aim", IE_Released, this, &AMPCharacter::AimButtonReleased);
-
 	PlayerInputComponent->BindAction("Fire", IE_Pressed, this, &AMPCharacter::FireButtonPressed);
 	PlayerInputComponent->BindAction("Fire", IE_Released, this, &AMPCharacter::FireButtonReleased);
-
 	PlayerInputComponent->BindAction("Reload", IE_Pressed, this, &AMPCharacter::ReloadButtonPressed);
 }
 
@@ -209,10 +223,7 @@ void AMPCharacter::MulticastEliminate_Implementation()
 	// Disable Movement
 	GetCharacterMovement()->DisableMovement();
 	GetCharacterMovement()->StopMovementImmediately();
-	if (MPPlayerController)
-	{
-		DisableInput(MPPlayerController);
-	}
+	bDisableGameplay = true;
 	
 	// Disable Collision
 	GetCapsuleComponent()->SetCollisionEnabled(ECollisionEnabled::NoCollision);
@@ -295,6 +306,7 @@ void AMPCharacter::PlayHitReactMontage()
 
 void AMPCharacter::MoveForward(float Value)
 {
+	if (bDisableGameplay) return;
 	if (Controller != nullptr && Value != 0.0f)
 	{
 		const FRotator YawRotation(0.f, Controller->GetControlRotation().Yaw, 0.f);
@@ -305,6 +317,7 @@ void AMPCharacter::MoveForward(float Value)
 
 void AMPCharacter::MoveRight(float Value)
 {
+	if (bDisableGameplay) return;
 	if (Controller != nullptr && Value != 0.0f)
 	{
 		const FRotator YawRotation(0.f, Controller->GetControlRotation().Yaw, 0.f);
@@ -325,6 +338,7 @@ void AMPCharacter::Turn(float Value)
 
 void AMPCharacter::Jump()
 {
+	if (bDisableGameplay) return;
 	if (bIsCrouched)
 	{
 		UnCrouch();
@@ -336,6 +350,7 @@ void AMPCharacter::Jump()
 
 void AMPCharacter::EquipButtonPressed()
 {
+	if (bDisableGameplay) return;
 	if (CombatComponent)
 	{
 		if (HasAuthority())
@@ -359,6 +374,7 @@ void AMPCharacter::ServerEquipButtonPressed_Implementation()
 
 void AMPCharacter::CrouchButtonPressed()
 {
+	if (bDisableGameplay) return;
 	if (bIsCrouched)
 	{
 		UnCrouch();
@@ -371,6 +387,7 @@ void AMPCharacter::CrouchButtonPressed()
 
 void AMPCharacter::ReloadButtonPressed()
 {
+	if (bDisableGameplay) return;
 	if (CombatComponent)
 	{
 		CombatComponent->Reload();
@@ -379,6 +396,7 @@ void AMPCharacter::ReloadButtonPressed()
 
 void AMPCharacter::AimButtonPressed()
 {
+	if (bDisableGameplay) return;
 	if (CombatComponent)
 	{
 		CombatComponent->SetAiming(true);
@@ -387,6 +405,7 @@ void AMPCharacter::AimButtonPressed()
 
 void AMPCharacter::AimButtonReleased()
 {
+	if (bDisableGameplay) return;
 	if (CombatComponent)
 	{
 		CombatComponent->SetAiming(false);
@@ -483,6 +502,7 @@ void AMPCharacter::TurnInPlace(float DeltaTime)
 
 void AMPCharacter::FireButtonPressed()
 {
+	if (bDisableGameplay) return;
 	if (CombatComponent)
 	{
 		CombatComponent->FireButtonPressed(true);
@@ -491,6 +511,7 @@ void AMPCharacter::FireButtonPressed()
 
 void AMPCharacter::FireButtonReleased()
 {
+	if (bDisableGameplay) return;
 	if (CombatComponent)
 	{
 		CombatComponent->FireButtonPressed(false);

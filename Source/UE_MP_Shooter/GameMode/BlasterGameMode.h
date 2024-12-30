@@ -9,6 +9,11 @@
 
 class AMPPlayerController;
 class AMPCharacter;
+
+namespace MatchState
+{
+	extern UE_MP_SHOOTER_API const FName Cooldown;
+}
 /**
  * 
  */
@@ -27,7 +32,10 @@ public:
 	float WarmupTime = 10.f;
 	UPROPERTY(EditDefaultsOnly)
 	float MatchTime = 120.f;
+	UPROPERTY(EditDefaultsOnly)
+	float CooldownTime = 10.f;
 	float LevelStaringTime = 0.f;
+	
 
 protected:
 	virtual void BeginPlay() override;
@@ -35,4 +43,7 @@ protected:
 	
 private:
 	float CountDownTime = 0.f;
+
+public:
+	FORCEINLINE float GetCountDownTime() const { return CountDownTime; }
 };

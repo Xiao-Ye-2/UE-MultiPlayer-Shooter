@@ -6,6 +6,7 @@
 #include "GameFramework/PlayerController.h"
 #include "MPPlayerController.generated.h"
 
+class ABlasterGameMode;
 class UCharacterOverlay;
 class AMPHUD;
 /**
@@ -31,6 +32,8 @@ public:
 	virtual float GetServerTime();
 	virtual void ReceivedPlayer() override;
 	void OnMatchStateSet(FName State);
+	void HandleCooldown();
+	void HandleInProgress();
 
 protected:
 	virtual void BeginPlay() override;
@@ -53,15 +56,19 @@ protected:
 	void ServerCheckMatchState();
 
 	UFUNCTION(Client, Reliable)
-	void ClientJoinMidGame(FName StateOfMatch, float Warmup, float Match, float StartingTime);
+	void ClientJoinMidGame(FName StateOfMatch, float Warmup, float Match, float Cooldown, float StartingTime);
 
 private:
 	UPROPERTY()
 	AMPHUD* MPHUD;
 
+	UPROPERTY()
+	ABlasterGameMode* BlasterGameMode;
+
 	float LevelStartingTime = 0.f;
 	float MatchTime = 0.f;
 	float WarmupTime = 0.f;
+	float CooldownTime = 0.f;
 	uint32 CountDownInt = 0;
 
 	UPROPERTY(ReplicatedUsing = OnRep_MatchState)

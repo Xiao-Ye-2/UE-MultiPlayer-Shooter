@@ -37,6 +37,8 @@ public:
 
 	UPROPERTY()
 	AMPPlayerState* MPPlayerState;
+	UPROPERTY(Replicated)
+	bool bDisableGameplay = false;
 
 protected:
 	virtual void BeginPlay() override;
@@ -54,6 +56,7 @@ protected:
 	float CalculateSpeed() const;
 	void CalculateAO_Pitch();
 	void AimOffset(float DeltaTime);
+	void RotateInPlace(float DeltaTime);
 	void SimProxiesTurn();
 	virtual void Jump() override;
 	void FireButtonPressed();
@@ -180,5 +183,7 @@ public:
 	FORCEINLINE bool IsEliminated() const { return bEliminated; }
 	FORCEINLINE float GetHealth() const { return Health; }
 	FORCEINLINE float GetMaxHealth() const { return MaxHealth; }
+	FORCEINLINE UCombatComponent* GetCombatComponent() const { return CombatComponent; }
+	FORCEINLINE bool GetDisableGameplay() const { return bDisableGameplay; }
 	ECombatStates GetCombatState() const;
 };
