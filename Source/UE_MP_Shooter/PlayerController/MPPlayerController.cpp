@@ -10,10 +10,12 @@
 #include "Net/UnrealNetwork.h"
 #include "UE_MP_Shooter/Character/MPCharacter.h"
 #include "UE_MP_Shooter/GameMode/BlasterGameMode.h"
+#include "UE_MP_Shooter/GameState/MPGameState.h"
 #include "UE_MP_Shooter/HUD/Announcement.h"
 #include "UE_MP_Shooter/HUD/CharacterOverlay.h"
 #include "UE_MP_Shooter/HUD/MPHUD.h"
 #include "UE_MP_Shooter/MPComponents/CombatComponent.h"
+#include "UE_MP_Shooter/PlayerState/MPPlayerState.h"
 
 void AMPPlayerController::BeginPlay()
 {
@@ -276,7 +278,28 @@ void AMPPlayerController::HandleCooldown()
 	MPHUD->Announcement->SetVisibility(ESlateVisibility::Visible);
 	FString AnnouncementText("New Match Starts In:");
 	MPHUD->Announcement->AnnouncementText->SetText(FText::FromString(AnnouncementText));
-	FString InfoText("");
+
+	AMPGameState* MPGameState = Cast<AMPGameState>(UGameplayStatics::GetGameState(this));
+	AMPPlayerState* MPPlayerState = GetPlayerState<AMPPlayerState>();
+	FString InfoText;
+	if (MPGameState && MPPlayerState)
+	{
+		TArray<AMPPlayerState*> TopPlayerStates = MPGameState->TopScoringPlayers;
+		if (TopPlayerStates.Num() == 0)
+		{
+			InfoText = FString("There is no winner.");
+		} else if (TopPlayerStates.Num() == 1 && TopPlayerStates[0] == MPPlayerState)
+		{
+			InfoText = FString("You won the game!");
+		} else if (TopPlayerStates.Num() == 1)
+		{
+			InfoText = FString::Printf(TEXT("Winner: \n%s"), *TopPlayerStates[0]->GetPlayerName());
+		} else
+		{
+			InfoText = FString("Players tied for the win:\n");
+			for (auto TiedPlayer : TopPlayerStates) InfoText.Append(FString::Printf(TEXT("%s\n"), *TiedPlayer->GetPlayerName()));
+		}
+	}
 	MPHUD->Announcement->InfoText->SetText(FText::FromString(InfoText));
 }
 

@@ -6,6 +6,7 @@
 #include "GameFramework/PlayerStart.h"
 #include "Kismet/GameplayStatics.h"
 #include "UE_MP_Shooter/Character/MPCharacter.h"
+#include "UE_MP_Shooter/GameState/MPGameState.h"
 #include "UE_MP_Shooter/PlayerState/MPPlayerState.h"
 
 namespace MatchState
@@ -73,10 +74,12 @@ void ABlasterGameMode::PlayerEliminated(AMPCharacter* EliminatedCharacter,
 {
 	AMPPlayerState* EliminatedPlayerState = EliminatedPlayerController? Cast<AMPPlayerState>(EliminatedPlayerController->PlayerState) : nullptr;
 	AMPPlayerState* AttackerPlayerState = AttakerPlayerController ? Cast<AMPPlayerState>(AttakerPlayerController->PlayerState) : nullptr;
+	AMPGameState* MPGameState = GetGameState<AMPGameState>();
 
-	if (AttackerPlayerState && AttackerPlayerState != EliminatedPlayerState)
+	if (AttackerPlayerState && AttackerPlayerState != EliminatedPlayerState && MPGameState)
 	{
 		AttackerPlayerState->AddToScore(1.f);
+		MPGameState->UpdateTopScore(AttackerPlayerState);
 	}
 	if (EliminatedPlayerState)
 	{
