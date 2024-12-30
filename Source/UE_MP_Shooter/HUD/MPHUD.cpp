@@ -4,14 +4,14 @@
 
 #include "MPHUD.h"
 
+#include "Announcement.h"
 #include "CharacterOverlay.h"
 #include "Blueprint/UserWidget.h"
 
 void AMPHUD::BeginPlay()
 {
 	Super::BeginPlay();
-
-	AddCharacterOverlay();
+	
 }
 
 void AMPHUD::AddCharacterOverlay()
@@ -21,6 +21,16 @@ void AMPHUD::AddCharacterOverlay()
 	{
 		CharacterOverlay = CreateWidget<UCharacterOverlay>(PlayerController, CharacterOverlayClass);
 		CharacterOverlay->AddToViewport();
+	}
+}
+
+void AMPHUD::AddAnnouncement()
+{
+	APlayerController* PlayerController = GetOwningPlayerController();
+	if (PlayerController && AnnouncementClass)
+	{
+		Announcement = CreateWidget<UAnnouncement>(PlayerController, AnnouncementClass);
+		Announcement->AddToViewport();
 	}
 }
 

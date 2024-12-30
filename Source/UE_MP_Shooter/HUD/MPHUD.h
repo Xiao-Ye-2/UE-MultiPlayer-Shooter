@@ -6,6 +6,7 @@
 #include "GameFramework/HUD.h"
 #include "MPHUD.generated.h"
 
+class UAnnouncement;
 class UCharacterOverlay;
 
 USTRUCT(BlueprintType)
@@ -33,15 +34,21 @@ class UE_MP_SHOOTER_API AMPHUD : public AHUD
 
 public:
 	virtual void DrawHUD() override;
-
+	void AddCharacterOverlay();
+	void AddAnnouncement();
+	
 	UPROPERTY(EditAnywhere, Category = "Player Stats")
 	TSubclassOf<UUserWidget> CharacterOverlayClass;
-	
+	UPROPERTY()
 	UCharacterOverlay* CharacterOverlay;
+
+	UPROPERTY(EditAnywhere, Category = "Announcement")
+	TSubclassOf<UUserWidget> AnnouncementClass;
+	UPROPERTY()
+	UAnnouncement* Announcement;
 
 protected:
 	virtual void BeginPlay() override;
-	void AddCharacterOverlay();
 	
 private:
 	FHUDPackage HUDPackage;
