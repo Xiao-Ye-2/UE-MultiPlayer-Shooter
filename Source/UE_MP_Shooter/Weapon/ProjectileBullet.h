@@ -14,6 +14,11 @@ class UE_MP_SHOOTER_API AProjectileBullet : public AProjectile
 {
 	GENERATED_BODY()
 
+public:
+	AProjectileBullet();
 protected:
 	virtual void OnHit(UPrimitiveComponent* HitComp, AActor* OtherActor, UPrimitiveComponent* OtherComp, FVector NormalImpluse, const FHitResult& Hit) override;
+
+	UPROPERTY(VisibleAnywhere)
+	UProjectileMovementComponent* ProjectileMovement;
 };

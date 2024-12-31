@@ -165,7 +165,8 @@ void UCombatComponent::OnRep_EquippedWeapon()
 
 void UCombatComponent::InitializeCarriedAmmo()
 {
-	CarriedAmmoMap.Emplace(EWeaponType::EWT_AssaultRifle, InitialCarriedAmmo);
+	CarriedAmmoMap.Emplace(EWeaponType::EWT_AssaultRifle, InitialRifleCarriedAmmo);
+	CarriedAmmoMap.Emplace(EWeaponType::EWT_RocketLauncher, InitialRocketCarriedAmmo);
 }
 
 void UCombatComponent::OnRep_CarriedAmmo()

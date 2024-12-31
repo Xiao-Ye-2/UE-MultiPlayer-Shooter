@@ -254,7 +254,7 @@ void AMPPlayerController::HandleInProgress()
 {
 	MPHUD = MPHUD == nullptr ? Cast<AMPHUD>(GetHUD()) : MPHUD;
 	if (MPHUD == nullptr) return;
-	MPHUD->AddCharacterOverlay();
+	if (MPHUD->CharacterOverlay == nullptr) MPHUD->AddCharacterOverlay();
 	if (MPHUD->Announcement == nullptr) return;
 	MPHUD->Announcement->SetVisibility(ESlateVisibility::Hidden);
 }

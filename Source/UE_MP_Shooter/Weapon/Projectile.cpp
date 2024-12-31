@@ -6,7 +6,6 @@
 #include "Kismet/GameplayStatics.h"
 #include "Sound/SoundCue.h"
 #include "UE_MP_Shooter/UE_MP_Shooter.h"
-#include "UE_MP_Shooter/Character/MPCharacter.h"
 
 AProjectile::AProjectile()
 {
@@ -21,9 +20,6 @@ AProjectile::AProjectile()
 	CollisionBox->SetCollisionResponseToChannel(ECC_Visibility, ECR_Block);
 	CollisionBox->SetCollisionResponseToChannel(ECC_WorldStatic, ECR_Block);
 	CollisionBox->SetCollisionResponseToChannel(ECC_SkeletalMesh, ECR_Block);
-
-	ProjectileMovement = CreateDefaultSubobject<UProjectileMovementComponent>(TEXT("ProjectileMovementComponent"));
-	ProjectileMovement->bRotationFollowsVelocity = true;
 }
 
 void AProjectile::BeginPlay()
