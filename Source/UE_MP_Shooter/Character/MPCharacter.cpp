@@ -243,6 +243,11 @@ void AMPCharacter::MulticastEliminate_Implementation()
 	{
 		UGameplayStatics::SpawnSoundAtLocation(this, EliminationEffectSound, GetActorLocation());
 	}
+
+	if (IsLocallyControlled() && CombatComponent && CombatComponent->bAiming && CombatComponent->EquippedWeapon && CombatComponent->EquippedWeapon->GetWeaponType() == EWeaponType::EWT_SniperRifle)
+	{
+		ShowSniperScopeWidget(false);
+	}
 }
 
 void AMPCharacter::EliminateTimerFinished()
@@ -290,6 +295,9 @@ void AMPCharacter::PlayReloadMontage()
 			break;
 		case EWeaponType::EWT_Shotgun:
 			SectionName = FName("Shotgun");
+			break;
+		case EWeaponType::EWT_SniperRifle:
+			SectionName = FName("SniperRifle");
 			break;
 		default:
 			SectionName = FName("Rifle");

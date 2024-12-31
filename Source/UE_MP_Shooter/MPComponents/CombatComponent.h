@@ -127,6 +127,10 @@ private:
 	int32 InitialSMGCarriedAmmo = 40;
 	UPROPERTY(EditAnywhere)
 	int32 InitialShotgunCarriedAmmo = 10;
+	UPROPERTY(EditAnywhere)
+	int32 InitialSniperCarriedAmmo = 2;
+	UPROPERTY(EditAnywhere)
+	int32 InitialGrenadeLauncherCarriedAmmo = 4;
 	void InitializeCarriedAmmo();
 	void UpdateCarriedAmmoHUD();
 
