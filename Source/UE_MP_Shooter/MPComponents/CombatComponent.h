@@ -120,9 +120,13 @@ private:
 
 	TMap<EWeaponType, int32> CarriedAmmoMap;
 	UPROPERTY(EditAnywhere)
-	int32 InitialRifleCarriedAmmo = 30;
+	int32 InitialRifleCarriedAmmo = 60;
 	UPROPERTY(EditAnywhere)
-	int32 InitialRocketCarriedAmmo = 0;
+	int32 InitialRocketCarriedAmmo = 4;
+	UPROPERTY(EditAnywhere)
+	int32 InitialPistolCarriedAmmo = 30;
+	UPROPERTY(EditAnywhere)
+	int32 InitialSMGCarriedAmmo = 40;
 	void InitializeCarriedAmmo();
 	void UpdateCarriedAmmoHUD();
 

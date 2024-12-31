@@ -167,6 +167,8 @@ void UCombatComponent::InitializeCarriedAmmo()
 {
 	CarriedAmmoMap.Emplace(EWeaponType::EWT_AssaultRifle, InitialRifleCarriedAmmo);
 	CarriedAmmoMap.Emplace(EWeaponType::EWT_RocketLauncher, InitialRocketCarriedAmmo);
+	CarriedAmmoMap.Emplace(EWeaponType::EWT_Pistol, InitialPistolCarriedAmmo);
+	CarriedAmmoMap.Emplace(EWeaponType::EWT_SubmachineGun, InitialSMGCarriedAmmo);
 }
 
 void UCombatComponent::OnRep_CarriedAmmo()
@@ -183,7 +185,7 @@ void UCombatComponent::UpdateCarriedAmmoHUD()
 
 void UCombatComponent::Reload()
 {
-	if (CarriedAmmo <= 0 || CombatState == ECombatStates::ECS_Reloading) return;
+	if (CarriedAmmo <= 0 || CombatState == ECombatStates::ECS_Reloading || (EquippedWeapon && EquippedWeapon->GetAmmo() == EquippedWeapon->GetMagCapacity())) return;
 	ServerReload();
 }
 

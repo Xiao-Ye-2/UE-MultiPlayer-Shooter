@@ -282,6 +282,12 @@ void AMPCharacter::PlayReloadMontage()
 		case EWeaponType::EWT_RocketLauncher:
 			SectionName = FName("RocketLauncher");
 			break;
+		case EWeaponType::EWT_Pistol:
+			SectionName = FName("Pistol");
+			break;
+		case EWeaponType::EWT_SubmachineGun:
+			SectionName = FName("SubmachineGun");
+			break;
 		default:
 			SectionName = FName("Rifle");
 			break;
