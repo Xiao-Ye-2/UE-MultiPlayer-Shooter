@@ -17,13 +17,20 @@ class UE_MP_SHOOTER_API AHitScanWeapon : public AWeapon
 public:
 	virtual void Fire(const FVector& HitTarget) override;
 
-private:
-	UPROPERTY(EditAnywhere)
-	float Damage = 20.f;
+protected:
+	FVector TraceEndWithScatter(const FVector& TraceStart, const FVector& HitTarget);
+	void WeaponTraceHit(FHitResult& Hit, const FVector& TraceStart, const FVector& HitTarget, float HitSoundVolumeMultiplier = 1.f, float HitSoundPitchMultiplier = 1.f);
 
 	UPROPERTY(EditAnywhere)
 	UParticleSystem* ImpactParticleSystem;
 
+	UPROPERTY(EditAnywhere)
+	USoundCue* HitSound;
+	
+	UPROPERTY(EditAnywhere)
+	float Damage = 20.f;
+
+private:
 	UPROPERTY(EditAnywhere)
 	UParticleSystem* BeamParticleSystem;
 
@@ -31,6 +38,12 @@ private:
 	UParticleSystem* MuzzleFlashParticleSystem;
 	UPROPERTY(EditAnywhere)
 	USoundCue* FireSound;
-	UPROPERTY(EditAnywhere)
-	USoundCue* HitSound;
+
+	UPROPERTY(EditAnywhere, Category = "Weapon Scatter")
+	float DistanceToSphere = 800.f;
+	UPROPERTY(EditAnywhere, Category = "Weapon Scatter")
+	float SphereRadius = 75.f;
+	UPROPERTY(EditAnywhere, Category = "Weapon Scatter")
+	bool bUseScatter = false;
+	
 };

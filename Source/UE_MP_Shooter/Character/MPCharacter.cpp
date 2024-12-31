@@ -288,6 +288,9 @@ void AMPCharacter::PlayReloadMontage()
 		case EWeaponType::EWT_SubmachineGun:
 			SectionName = FName("SubmachineGun");
 			break;
+		case EWeaponType::EWT_Shotgun:
+			SectionName = FName("Shotgun");
+			break;
 		default:
 			SectionName = FName("Rifle");
 			break;

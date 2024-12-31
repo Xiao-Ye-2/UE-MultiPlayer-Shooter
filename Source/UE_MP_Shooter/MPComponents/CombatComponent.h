@@ -9,8 +9,6 @@
 #include "UE_MP_Shooter/Weapon/WeaponTypes.h"
 #include "CombatComponent.generated.h"
 
-#define TRACE_LENGTH 80000.f;
-
 class AMPPlayerController;
 class AMPHUD;
 class AWeapon;
@@ -127,6 +125,8 @@ private:
 	int32 InitialPistolCarriedAmmo = 30;
 	UPROPERTY(EditAnywhere)
 	int32 InitialSMGCarriedAmmo = 40;
+	UPROPERTY(EditAnywhere)
+	int32 InitialShotgunCarriedAmmo = 10;
 	void InitializeCarriedAmmo();
 	void UpdateCarriedAmmoHUD();
 
