@@ -3,6 +3,7 @@
 
 #include "Projectile.h"
 
+#include "NiagaraFunctionLibrary.h"
 #include "Kismet/GameplayStatics.h"
 #include "Sound/SoundCue.h"
 #include "UE_MP_Shooter/UE_MP_Shooter.h"
@@ -38,6 +39,12 @@ void AProjectile::BeginPlay()
 	}
 }
 
+void AProjectile::Tick(float DeltaTime)
+{
+	Super::Tick(DeltaTime);
+
+}
+
 void AProjectile::Destroyed()
 {
 	Super::Destroyed();
@@ -58,9 +65,35 @@ void AProjectile::OnHit(UPrimitiveComponent* HitComp, AActor* OtherActor, UPrimi
 	Destroy();
 }
 
-void AProjectile::Tick(float DeltaTime)
+void AProjectile::SpawnTrailSystem()
 {
-	Super::Tick(DeltaTime);
-
+	if (TrailSystem)
+	{
+		TrailSystemComponent = UNiagaraFunctionLibrary::SpawnSystemAttached(TrailSystem, GetRootComponent(), FName(),
+			GetActorLocation(), GetActorRotation(), EAttachLocation::KeepWorldPosition, false);
+	}
 }
 
+void AProjectile::StartDestroyTimer()
+{
+	GetWorldTimerManager().SetTimer(DestroyTimer, this, &ThisClass::DestroyTimerFinished, DestroyTime);
+}
+
+void AProjectile::DestroyTimerFinished()
+{
+	Destroy();
+}
+
+void AProjectile::ExplodeDamage()
+{
+	APawn* FiringPawn = GetInstigator();
+	if (FiringPawn && HasAuthority())
+	{
+		if (AController* FiringController = FiringPawn->GetController())
+		{
+			UGameplayStatics::ApplyRadialDamageWithFalloff(this, Damage, 10.f,
+				GetActorLocation(), DamageInnerRadius, DamageOuterRadius, 1.f,
+				UDamageType::StaticClass(), TArray<AActor*>(), this, FiringController);
+		}
+	}
+}

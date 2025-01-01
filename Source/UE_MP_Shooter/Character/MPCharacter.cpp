@@ -291,13 +291,16 @@ void AMPCharacter::PlayReloadMontage()
 			SectionName = FName("Pistol");
 			break;
 		case EWeaponType::EWT_SubmachineGun:
-			SectionName = FName("SubmachineGun");
+			SectionName = FName("Pistol");
 			break;
 		case EWeaponType::EWT_Shotgun:
 			SectionName = FName("Shotgun");
 			break;
 		case EWeaponType::EWT_SniperRifle:
 			SectionName = FName("SniperRifle");
+			break;
+		case EWeaponType::EWT_GrenadeLauncher:
+			SectionName = FName("GrenadeLauncher");
 			break;
 		default:
 			SectionName = FName("Rifle");
@@ -375,16 +378,12 @@ void AMPCharacter::Jump()
 void AMPCharacter::EquipButtonPressed()
 {
 	if (bDisableGameplay) return;
-	if (CombatComponent)
+	if (HasAuthority())
 	{
-		if (HasAuthority())
-		{
-			CombatComponent->EquipWeapon(OverlappingWeapon);
-		}
-		else
-		{
-			ServerEquipButtonPressed();
-		}
+		ServerEquipButtonPressed_Implementation();
+	} else
+	{
+		ServerEquipButtonPressed();
 	}
 }
 

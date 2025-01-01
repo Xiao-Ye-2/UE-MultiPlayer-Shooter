@@ -6,6 +6,7 @@
 #include "Projectile.h"
 #include "ProjectileBullet.generated.h"
 
+class UProjectileMovementComponent;
 /**
  * 
  */

@@ -5,8 +5,10 @@
 #include "CoreMinimal.h"
 #include "Components/BoxComponent.h"
 #include "GameFramework/Actor.h"
-#include "GameFramework/ProjectileMovementComponent.h"
 #include "Projectile.generated.h"
+
+class UNiagaraComponent;
+class UNiagaraSystem;
 
 UCLASS()
 class UE_MP_SHOOTER_API AProjectile : public AActor
@@ -20,26 +22,46 @@ public:
 
 protected:
 	virtual void BeginPlay() override;
+	
+	UFUNCTION()
+	virtual void OnHit(UPrimitiveComponent* HitComp, AActor* OtherActor, UPrimitiveComponent* OtherComp, FVector NormalImpluse, const FHitResult& Hit);
 
+	void SpawnTrailSystem();
+	void StartDestroyTimer();
+	void DestroyTimerFinished();
+	void ExplodeDamage();
+	
 	UPROPERTY(EditAnywhere)
 	UBoxComponent* CollisionBox;
 	
 	UPROPERTY(EditAnywhere)
 	UParticleSystem* ImpactParticle;
-
 	UPROPERTY(EditAnywhere)
 	USoundCue* ImpactSound;
 
-	UFUNCTION()
-	virtual void OnHit(UPrimitiveComponent* HitComp, AActor* OtherActor, UPrimitiveComponent* OtherComp, FVector NormalImpluse, const FHitResult& Hit);
-
 	UPROPERTY(EditAnywhere)
-	float Damage = 20.f;
+	UNiagaraSystem* TrailSystem;
+	UPROPERTY()
+	UNiagaraComponent* TrailSystemComponent;
 
+	UPROPERTY(VisibleAnywhere)
+	UStaticMeshComponent* ProjectileMesh;
+
+	UPROPERTY(EditDefaultsOnly)
+	float Damage = 20.f;
+	UPROPERTY(EditDefaultsOnly)
+	float DamageInnerRadius = 200.f;
+	UPROPERTY(EditDefaultsOnly)
+	float DamageOuterRadius = 500.f;
+	
+	FTimerHandle DestroyTimer;
+	UPROPERTY(EditAnywhere)
+	float DestroyTime = 3.f;
+
+	
 private:
 	UPROPERTY(EditAnywhere)
 	UParticleSystem* Tracer;
-
 	UPROPERTY()
 	UParticleSystemComponent* TracerComponent;
 
