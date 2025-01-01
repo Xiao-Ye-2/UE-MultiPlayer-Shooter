@@ -26,10 +26,14 @@ public:
 	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
 	void EquipWeapon(AWeapon* WeaponToEquip);
 	void Reload();
-	void UpdateAmmoAfterReload();
 	void FireButtonPressed(bool bPressed);
+	
 	UFUNCTION(BlueprintCallable)
 	void FinishReloading();
+	UFUNCTION(BlueprintCallable)
+	void ShotgunShellReload();
+
+	void JumpToShotgunEnd() const;
 protected:
 	virtual void BeginPlay() override;
 	void SetAiming(bool bIsAiming);
@@ -138,6 +142,9 @@ private:
 	ECombatStates CombatState = ECombatStates::ECS_Unoccupied;
 	UFUNCTION()
 	void OnRep_CombatState();
+
+	void UpdateAmmoAfterReload();
+	void UpdateShotgunAmmoAfterReload();
 public:	
 
 		
