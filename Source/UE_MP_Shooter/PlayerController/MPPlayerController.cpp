@@ -54,6 +54,8 @@ void AMPPlayerController::InitializeCharacterOverlay()
 		if (bInitializeShield) SetHUDShield(HUDShield, HUDMaxShield);
 		if (bInitializeScore) SetHUDScore(HUDScore);
 		if (bInitializeDefeats) SetHUDDefeats(HUDDefeats);
+		if (bInitializeWeaponAmmo) SetHUDWeaponAmmo(HUDWeaponAmmo);
+		if (bInitializeCarriedAmmo) SetHUDCarriedAmmo(HUDCarriedAmmo);
 		AMPCharacter* MPCharacter = Cast<AMPCharacter>(GetPawn());
 		if (MPCharacter && MPCharacter->GetCombatComponent())
 		{
@@ -206,6 +208,10 @@ void AMPPlayerController::SetHUDWeaponAmmo(int32 Ammo)
 	if (MPHUD && MPHUD->CharacterOverlay && MPHUD->CharacterOverlay->WeaponAmmoAmount)
 	{
 		MPHUD->CharacterOverlay->WeaponAmmoAmount->SetText(FText::FromString(FString::FromInt(Ammo)));
+	} else
+	{
+		bInitializeWeaponAmmo = true;
+		HUDWeaponAmmo = Ammo;
 	}
 }
 
@@ -215,6 +221,10 @@ void AMPPlayerController::SetHUDCarriedAmmo(int32 Ammo)
 	if (MPHUD && MPHUD->CharacterOverlay && MPHUD->CharacterOverlay->CarriedAmmoAmount)
 	{
 		MPHUD->CharacterOverlay->CarriedAmmoAmount->SetText(FText::FromString(FString::FromInt(Ammo)));
+	} else
+	{
+		bInitializeCarriedAmmo = true;
+		HUDCarriedAmmo = Ammo;
 	}
 }
 

@@ -77,13 +77,14 @@ void AMPCharacter::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLife
 void AMPCharacter::BeginPlay()
 {
 	Super::BeginPlay();
+	
+	SpawnDefaultWeapon();
 
+	if (CombatComponent) CombatComponent->UpdateCarriedAmmoHUD();
+	if (CombatComponent && CombatComponent->EquippedWeapon) CombatComponent->EquippedWeapon->SetHUDWeaponAmmo();
 	UpdateHUDHealth();
 	UpdateHUDShield();
-	if (HasAuthority())
-	{
-		OnTakeAnyDamage.AddDynamic(this, &ThisClass::ReceiveDamage);
-	}
+	if (HasAuthority()) OnTakeAnyDamage.AddDynamic(this, &ThisClass::ReceiveDamage);
 	if (AttachedGrenade) AttachedGrenade->SetVisibility(false);
 }
 
@@ -210,12 +211,20 @@ void AMPCharacter::OnRep_ReplicatedMovement()
 
 void AMPCharacter::Eliminate()
 {
-	if (CombatComponent && CombatComponent->EquippedWeapon)
+	if (CombatComponent)
 	{
-		CombatComponent->EquippedWeapon->Drop();
+		WeaponHandleWhenEliminated(CombatComponent->EquippedWeapon);
+		WeaponHandleWhenEliminated(CombatComponent->SecondaryWeapon);
 	}
 	MulticastEliminate();
 	GetWorldTimerManager().SetTimer(EliminatedTimer, this, &ThisClass::EliminateTimerFinished, EliminateDelay);
+}
+
+void AMPCharacter::WeaponHandleWhenEliminated(AWeapon* Weapon)
+{
+	if (Weapon == nullptr) return;
+	if (Weapon->bDestroyWeaponWhenDrop) Weapon->Destroy();
+	else Weapon->Drop();
 }
 
 void AMPCharacter::MulticastEliminate_Implementation()
@@ -401,20 +410,18 @@ void AMPCharacter::Jump()
 void AMPCharacter::EquipButtonPressed()
 {
 	if (bDisableGameplay) return;
-	if (HasAuthority())
-	{
-		ServerEquipButtonPressed_Implementation();
-	} else
-	{
-		ServerEquipButtonPressed();
-	}
+	ServerEquipButtonPressed();
 }
 
 void AMPCharacter::ServerEquipButtonPressed_Implementation()
 {
-	if (CombatComponent)
+	if (CombatComponent == nullptr) return;
+	if (OverlappingWeapon)
 	{
 		CombatComponent->EquipWeapon(OverlappingWeapon);
+	} else if (CombatComponent->ShouldSwapWeapons())
+	{
+		CombatComponent->SwapWeapons();
 	}
 }
 
@@ -663,6 +670,18 @@ void AMPCharacter::UpdateHUDShield()
 {
 	MPPlayerController = MPPlayerController == nullptr ? Cast<AMPPlayerController>(GetController()) : MPPlayerController;
 	if (MPPlayerController) MPPlayerController->SetHUDShield(Shield, MaxShield);
+}
+
+void AMPCharacter::SpawnDefaultWeapon()
+{
+	ABlasterGameMode* BlasterGameMode = Cast<ABlasterGameMode>(UGameplayStatics::GetGameMode(this));
+	UWorld* World = GetWorld();
+	if (BlasterGameMode && World && !bEliminated && DefaultWeaponClass && CombatComponent)
+	{
+		AWeapon* StartingWeapon = World->SpawnActor<AWeapon>(DefaultWeaponClass);
+		StartingWeapon->bDestroyWeaponWhenDrop = true;
+		CombatComponent->EquipWeapon(StartingWeapon);
+	}
 }
 
 bool AMPCharacter::IsWeaponEquipped() const

@@ -19,7 +19,8 @@ enum class EWeaponStates : uint8
 	EWS_Initial UMETA(DisplayName = "Initial State"),
 	EWS_Equipped UMETA(DisplayName = "Equipped State"),
 	EWS_Dropped UMETA(DisplayName = "Dropped State"),
-
+	EWS_EquippedSecondary UMETA(DisplayName = "Equipped Secondary State"),
+	
 	EWS_MAX UMETA(DisplayName = "Default MAX"),
 };
 
@@ -63,6 +64,8 @@ public:
 
 	UPROPERTY(EditAnywhere, Category = "Combat")
 	USoundCue* EquipSound;
+
+	bool bDestroyWeaponWhenDrop = false;
 protected:
 	virtual void BeginPlay() override;
 
@@ -93,6 +96,7 @@ private:
 	UFUNCTION()
 	void OnRep_WeaponState();
 	void OnEquipped();
+	void OnEquippedSecondary();
 	void OnDropped();
 
 	UPROPERTY(VisibleAnywhere, Category = "Weapon Properties")

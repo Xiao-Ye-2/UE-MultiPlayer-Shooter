@@ -33,6 +33,7 @@ public:
 	void PlayThrowGrenadeMontage();
 	void UpdateHUDHealth();
 	void UpdateHUDShield();
+	void SpawnDefaultWeapon();
 	virtual void OnRep_ReplicatedMovement() override;
 	virtual void Destroyed() override;
 
@@ -163,6 +164,7 @@ private:
 	UPROPERTY(EditDefaultsOnly, Category = "Player Stats")
 	float EliminateDelay = 3.f;
 	void EliminateTimerFinished();
+	void WeaponHandleWhenEliminated(AWeapon* Weapon);
 	
 	UPROPERTY(VisibleAnywhere)
 	UTimelineComponent* DissolveTimeline;
@@ -188,6 +190,9 @@ private:
 
 	UPROPERTY(VisibleAnywhere)
 	UStaticMeshComponent* AttachedGrenade;
+
+	UPROPERTY(EditAnywhere)
+	TSubclassOf<AWeapon> DefaultWeaponClass;
 	
 public:	
 	void SetOverlappingWeapon(AWeapon* Weapon);

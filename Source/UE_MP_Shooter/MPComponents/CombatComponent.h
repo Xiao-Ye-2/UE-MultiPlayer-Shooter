@@ -26,6 +26,7 @@ public:
 	virtual void TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) override;
 	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
 	void EquipWeapon(AWeapon* WeaponToEquip);
+	void SwapWeapons();
 	void Reload();
 	void FireButtonPressed(bool bPressed);
 	
@@ -43,7 +44,11 @@ protected:
 	void ServerSetAiming(bool bIsAiming);
 
 	UFUNCTION()
-	void OnRep_EquippedWeapon();
+	void OnRep_PrimaryWeapon();
+	UFUNCTION()
+	void OnRep_SecondaryWeapon();
+	void EquipPrimaryWeapon(AWeapon* WeaponToEquip);
+	void EquipSecondaryWeapon(AWeapon* WeaponToEquip);
 	void Fire();
 	bool CanFire() const;
 
@@ -75,8 +80,9 @@ protected:
 	void DropEquippedWeapon() const;
 	void AttachActorToRightHand(AActor* ActorToAttach) const;
 	void AttachActorToLeftHand(AActor* ActorToAttach) const;
+	void AttachActorToBackpack(AActor* ActorToAttach) const;
 	void AttachActorToSocket(AActor* ActorToAttach, FName SocketName) const;
-	void PlayEquipWeaponSound() const;
+	void PlayWeaponEquipSound(AWeapon* WeaponToEquip) const;
 	void ReloadIfWeaponEmpty();
 private:
 	UPROPERTY()
@@ -86,8 +92,10 @@ private:
 	UPROPERTY()
 	AMPHUD* HUD;
 
-	UPROPERTY(ReplicatedUsing = OnRep_EquippedWeapon)
+	UPROPERTY(ReplicatedUsing = OnRep_PrimaryWeapon)
 	AWeapon* EquippedWeapon;
+	UPROPERTY(ReplicatedUsing = OnRep_SecondaryWeapon)
+	AWeapon* SecondaryWeapon;
 
 	UPROPERTY(Replicated)
 	bool bAiming;
@@ -178,7 +186,6 @@ private:
 	void ShowAttachedGrenade(bool bShowGrenade) const;
 public:	
 	FORCEINLINE int32 GetGrenades() const { return Grenades; }
-		
+	FORCEINLINE bool ShouldSwapWeapons() const { return EquippedWeapon != nullptr && SecondaryWeapon != nullptr; }
 };
-
 

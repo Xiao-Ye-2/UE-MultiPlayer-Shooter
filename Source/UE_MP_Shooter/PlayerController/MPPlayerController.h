@@ -91,5 +91,9 @@ private:
 	bool bInitializeScore = false;
 	int32 HUDDefeats;
 	bool bInitializeDefeats = false;
+	float HUDCarriedAmmo;
+	bool bInitializeCarriedAmmo = false;
+	float HUDWeaponAmmo;
+	bool bInitializeWeaponAmmo = false;
 };
 
