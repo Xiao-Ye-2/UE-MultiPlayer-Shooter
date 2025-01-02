@@ -25,6 +25,7 @@ public:
 	void SetHUDCarriedAmmo(int32 Ammo);
 	void SetHUDMatchCountDown(float time);
 	void SetHUDAnnouncementCountDown(float time);
+	void SetHUDGrenades(uint32 grenades);
 	void virtual OnPossess(APawn* InPawn) override;
 	virtual void Tick(float DeltaTime) override;
 	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;

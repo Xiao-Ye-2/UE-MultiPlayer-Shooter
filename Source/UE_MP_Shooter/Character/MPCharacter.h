@@ -27,7 +27,8 @@ public:
 	virtual void PostInitializeComponents() override;
 	void PlayFireMontage(bool bAiming);
 	void PlayReloadMontage();
-	void PlayElimMontage();
+	void PlayEliminateMontage();
+	void PlayThrowGrenadeMontage();
 	virtual void OnRep_ReplicatedMovement() override;
 	virtual void Destroyed() override;
 
@@ -64,6 +65,7 @@ protected:
 	virtual void Jump() override;
 	void FireButtonPressed();
 	void FireButtonReleased();
+	void GrenadeButtonPressed();
 	void PlayHitReactMontage();
 	void UpdateHUDHealth();
 
@@ -104,15 +106,14 @@ private:
 	
 	UPROPERTY(EditAnywhere, Category = Combat)
 	UAnimMontage* HitReactMontage;
-
 	UPROPERTY(EditAnywhere, Category = Combat)
 	UAnimMontage* ElimMontage;
-	
 	UPROPERTY(EditAnywhere, Category = Combat)
 	UAnimMontage* ReloadMontage;
-
 	UPROPERTY(EditAnywhere, Category = Combat)
 	UAnimMontage* FireWeaponMontage;
+	UPROPERTY(EditAnywhere, Category = Combat)
+	UAnimMontage* ThrowGrenadeMontage;
 
 	UPROPERTY(EditAnywhere, Category = Combat)
 	float CameraThreshold;
@@ -170,7 +171,9 @@ private:
 	UParticleSystem* EliminationEffect;
 	UPROPERTY(EditAnywhere, Category = "Elimination")
 	USoundCue* EliminationEffectSound;
-	
+
+	UPROPERTY(VisibleAnywhere)
+	UStaticMeshComponent* AttachedGrenade;
 	
 public:	
 	void SetOverlappingWeapon(AWeapon* Weapon);
@@ -189,5 +192,6 @@ public:
 	FORCEINLINE UCombatComponent* GetCombatComponent() const { return CombatComponent; }
 	FORCEINLINE bool GetDisableGameplay() const { return bDisableGameplay; }
 	FORCEINLINE UAnimMontage* GetReloadMontage() const { return ReloadMontage; }
+	FORCEINLINE UStaticMeshComponent* GetAttachedGrenade() const { return AttachedGrenade; }
 	ECombatStates GetCombatState() const;
 };

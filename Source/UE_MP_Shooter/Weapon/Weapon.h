@@ -28,16 +28,18 @@ class UE_MP_SHOOTER_API AWeapon : public AActor
 {
 	GENERATED_BODY()
 	
-public:	
+public:
 	AWeapon();
 	virtual void Tick(float DeltaTime) override;
 	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
+	void SetDefaultCustomDepthEnabled();
 	virtual void OnRep_Owner() override;
 	void ShowPickupWidget(bool bShowWidget);
 	virtual void Fire(const FVector& HitTarget);
 	void Drop();
 	void SetHUDWeaponAmmo();
 	void AddAmmo(int32 Amount);
+	void EnabledCustomDepth(bool bEnabled);
 
 	/**
 	 * Textures for the weapon crosshairs
@@ -132,7 +134,6 @@ private:
 	
 public:
 	void SetWeaponState(EWeaponStates State);
-	void OnWeaponStateSet();
 	FORCEINLINE USphereComponent* GetAreaSphere() { return AreaSphere; }
 	FORCEINLINE USkeletalMeshComponent* GetWeaponMesh() const { return WeaponMesh; }
 	FORCEINLINE float GetZoomedFOV() const { return ZoomedFOV; }
@@ -143,3 +144,5 @@ public:
 	FORCEINLINE bool IsEmpty() const { return Ammo <= 0; }
 	FORCEINLINE bool IsFull() const { return Ammo >= MagCapacity; }
 };
+
+

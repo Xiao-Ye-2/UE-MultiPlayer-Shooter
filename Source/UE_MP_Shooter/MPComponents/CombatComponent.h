@@ -9,6 +9,7 @@
 #include "UE_MP_Shooter/Weapon/WeaponTypes.h"
 #include "CombatComponent.generated.h"
 
+class AProjectile;
 class AMPPlayerController;
 class AMPHUD;
 class AWeapon;
@@ -32,12 +33,12 @@ public:
 	void FinishReloading();
 	UFUNCTION(BlueprintCallable)
 	void ShotgunShellReload();
-
 	void JumpToShotgunEnd() const;
+
+	void PickupAmmo(EWeaponType WeaponType, int32 Amount);
 protected:
 	virtual void BeginPlay() override;
 	void SetAiming(bool bIsAiming);
-
 	UFUNCTION(Server, Reliable)
 	void ServerSetAiming(bool bIsAiming);
 
@@ -57,8 +58,26 @@ protected:
 	int32 AmountToReload();
 
 	void TraceUnderCrosshairs(FHitResult& TraceHitResult);
-	
 	void SetHUDCrosshairs(float DeltaTime);
+	
+	void ThrowGrenade();
+	UFUNCTION(Server, Reliable)
+	void ServerThrowGrenade();
+	UFUNCTION(BlueprintCallable)
+	void ThrowGrenadeFinished();
+	UFUNCTION(BlueprintCallable)
+	void LaunchGrenade();
+	UFUNCTION(Server, Reliable)
+	void ServerLaunchGrenade(const FVector_NetQuantize& Target);
+	UPROPERTY(EditAnywhere)
+	TSubclassOf<AProjectile> GrenadeProjectileClass;
+
+	void DropEquippedWeapon() const;
+	void AttachActorToRightHand(AActor* ActorToAttach) const;
+	void AttachActorToLeftHand(AActor* ActorToAttach) const;
+	void AttachActorToSocket(AActor* ActorToAttach, FName SocketName) const;
+	void PlayEquipWeaponSound() const;
+	void ReloadIfWeaponEmpty();
 private:
 	UPROPERTY()
 	AMPCharacter* Character;
@@ -135,8 +154,19 @@ private:
 	int32 InitialSniperCarriedAmmo = 2;
 	UPROPERTY(EditAnywhere)
 	int32 InitialGrenadeLauncherCarriedAmmo = 4;
+
+	UPROPERTY(EditDefaultsOnly)
+	int32 MaxCarriedAmmo = 400;
+
+	UPROPERTY(ReplicatedUsing = OnRep_Grenades)
+	int32 Grenades = 2;
+	UFUNCTION()
+	void OnRep_Grenades();
+	UPROPERTY(EditAnywhere)
+	int32 MaxGrenades = 4;
 	void InitializeCarriedAmmo();
 	void UpdateCarriedAmmoHUD();
+	void UpdateCarriedAmmo();
 
 	UPROPERTY(ReplicatedUsing = OnRep_CombatState)
 	ECombatStates CombatState = ECombatStates::ECS_Unoccupied;
@@ -145,8 +175,10 @@ private:
 
 	void UpdateAmmoAfterReload();
 	void UpdateShotgunAmmoAfterReload();
+	void ShowAttachedGrenade(bool bShowGrenade) const;
 public:	
-
+	FORCEINLINE int32 GetGrenades() const { return Grenades; }
 		
 };
+
 

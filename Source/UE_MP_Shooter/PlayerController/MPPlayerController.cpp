@@ -53,6 +53,11 @@ void AMPPlayerController::InitializeCharacterOverlay()
 				SetHUDHealth(HUDHealth, HUDMaxHealth);
 				SetHUDScore(HUDScore);
 				SetHUDDefeats(HUDDefeats);
+				AMPCharacter* MPCharacter = Cast<AMPCharacter>(GetPawn());
+				if (MPCharacter && MPCharacter->GetCombatComponent())
+				{
+					SetHUDGrenades(MPCharacter->GetCombatComponent()->GetGrenades());
+				}
 			}
 		}
 	}
@@ -229,6 +234,15 @@ void AMPPlayerController::SetHUDAnnouncementCountDown(float time)
 		int32 Seconds = time - (Minutes * 60);
 		FString CountDownText = FString::Printf(TEXT("%02d:%02d"), Minutes, Seconds);
 		MPHUD->Announcement->WarmupTime->SetText(FText::FromString(CountDownText));
+	}
+}
+
+void AMPPlayerController::SetHUDGrenades(uint32 grenades)
+{
+	MPHUD = MPHUD == nullptr ? Cast<AMPHUD>(GetHUD()) : MPHUD;
+	if (MPHUD && MPHUD->CharacterOverlay && MPHUD->CharacterOverlay->GrenadesText)
+	{
+		MPHUD->CharacterOverlay->GrenadesText->SetText(FText::FromString(FString::FromInt(grenades)));
 	}
 }
 

@@ -43,6 +43,10 @@ AMPCharacter::AMPCharacter()
 	CombatComponent = CreateDefaultSubobject<UCombatComponent>(TEXT("CombatComponent"));
 	CombatComponent->SetIsReplicated(true);
 
+	AttachedGrenade = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("AttachedGrenade"));
+	AttachedGrenade->SetupAttachment(GetMesh(), FName("RightHandSocket"));
+	AttachedGrenade->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+
 	GetCharacterMovement()->NavAgentProps.bCanCrouch = true;
 	GetCapsuleComponent()->SetCollisionResponseToChannel(ECC_Camera, ECR_Ignore);
 	GetMesh()->SetCollisionObjectType(ECC_SkeletalMesh);
@@ -74,6 +78,7 @@ void AMPCharacter::BeginPlay()
 	{
 		OnTakeAnyDamage.AddDynamic(this, &ThisClass::ReceiveDamage);
 	}
+	if (AttachedGrenade) AttachedGrenade->SetVisibility(false);
 }
 
 void AMPCharacter::Destroyed()
@@ -174,6 +179,7 @@ void AMPCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCompone
 	PlayerInputComponent->BindAction("Fire", IE_Pressed, this, &AMPCharacter::FireButtonPressed);
 	PlayerInputComponent->BindAction("Fire", IE_Released, this, &AMPCharacter::FireButtonReleased);
 	PlayerInputComponent->BindAction("Reload", IE_Pressed, this, &AMPCharacter::ReloadButtonPressed);
+	PlayerInputComponent->BindAction("ThrowGrenade", IE_Pressed, this, &AMPCharacter::GrenadeButtonPressed);
 }
 
 void AMPCharacter::PostInitializeComponents()
@@ -211,7 +217,7 @@ void AMPCharacter::MulticastEliminate_Implementation()
 		MPPlayerController->SetHUDWeaponAmmo(0);
 	}
 	bEliminated = true;
-	PlayElimMontage();
+	PlayEliminateMontage();
 
 	// Dissolve Effects
 	if (DissolveMaterialInstance)
@@ -310,12 +316,21 @@ void AMPCharacter::PlayReloadMontage()
 	}
 }
 
-void AMPCharacter::PlayElimMontage()
+void AMPCharacter::PlayEliminateMontage()
 {
 	UAnimInstance* AnimInstance = GetMesh()->GetAnimInstance();
 	if (AnimInstance && ElimMontage)
 	{
 		AnimInstance->Montage_Play(ElimMontage);
+	}
+}
+
+void AMPCharacter::PlayThrowGrenadeMontage()
+{
+	UAnimInstance* AnimInstance = GetMesh()->GetAnimInstance();
+	if (AnimInstance && ThrowGrenadeMontage)
+	{
+		AnimInstance->Montage_Play(ThrowGrenadeMontage);
 	}
 }
 
@@ -541,9 +556,16 @@ void AMPCharacter::FireButtonReleased()
 	}
 }
 
-void AMPCharacter::ReceiveDamage(AActor* DamageActor, float Damage, const UDamageType* DamageType,
-	AController* InstigatorController, AActor* DamageCauser)
+void AMPCharacter::GrenadeButtonPressed()
 {
+	if (CombatComponent == nullptr) return;
+	CombatComponent->ThrowGrenade();
+}
+
+void AMPCharacter::ReceiveDamage(AActor* DamageActor, float Damage, const UDamageType* DamageType,
+                                 AController* InstigatorController, AActor* DamageCauser)
+{
+	if (bEliminated) return;
 	Health = FMath::Clamp(Health - Damage, 0.f, MaxHealth);
 	PlayHitReactMontage();
 	UpdateHUDHealth();
