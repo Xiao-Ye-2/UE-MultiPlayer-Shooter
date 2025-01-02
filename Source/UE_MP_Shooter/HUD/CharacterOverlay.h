@@ -19,9 +19,13 @@ class UE_MP_SHOOTER_API UCharacterOverlay : public UUserWidget
 public:
 	UPROPERTY(Meta = (BindWidget))
 	UProgressBar* HealthBar;
-
 	UPROPERTY(Meta = (BindWidget))
 	UTextBlock* HealthText;
+
+	UPROPERTY(Meta = (BindWidget))
+	UProgressBar* ShieldBar;
+	UPROPERTY(Meta = (BindWidget))
+	UTextBlock* ShieldText;
 
 	UPROPERTY(Meta = (BindWidget))
 	UTextBlock* ScoreAmount;

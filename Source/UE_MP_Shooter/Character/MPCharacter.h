@@ -32,6 +32,7 @@ public:
 	void PlayEliminateMontage();
 	void PlayThrowGrenadeMontage();
 	void UpdateHUDHealth();
+	void UpdateHUDShield();
 	virtual void OnRep_ReplicatedMovement() override;
 	virtual void Destroyed() override;
 
@@ -88,14 +89,17 @@ private:
 
 	UPROPERTY(ReplicatedUsing = OnRep_OverlappingWeapon)
 	class AWeapon* OverlappingWeapon;
-	
-	UFUNCTION()
-	void OnRep_OverlappingWeapon(AWeapon* LastWeapon) const;
+
+	UPROPERTY()
+	AMPPlayerController* MPPlayerController;
 
 	UPROPERTY(VisibleAnywhere, blueprintReadOnly, meta = (AllowPrivateAccess = true))
 	UCombatComponent* CombatComponent;
 	UPROPERTY(VisibleAnywhere, blueprintReadOnly, meta = (AllowPrivateAccess = true))
 	UBuffComponent* BuffComponent;
+
+	UFUNCTION()
+	void OnRep_OverlappingWeapon(AWeapon* LastWeapon) const;
 
 	UFUNCTION(Server, Reliable)
 	void ServerEquipButtonPressed();
@@ -135,25 +139,31 @@ private:
 	 */
 	UPROPERTY(EditAnywhere, Category = "Player Stats")
 	float MaxHealth = 100.f;
-
 	UPROPERTY(ReplicatedUsing = OnRep_Health, VisibleAnywhere, Category = "Player Stats")
 	float Health = 100.f;
-
 	UFUNCTION()
 	void OnRep_Health(float LastHealth);
 
-	UPROPERTY()
-	AMPPlayerController* MPPlayerController;
+	/**
+	 * Shield
+	 */
+	UPROPERTY(EditAnywhere, Category = "Player Stats")
+	float MaxShield = 100.f;
+	UPROPERTY(ReplicatedUsing = OnRep_Shield, EditAnywhere, Category = "Player Stats")
+	float Shield = 100.f;
+	UFUNCTION()
+	void OnRep_Shield(float LastShield);
+
+	/**
+	 * Dissolve Effects and Elimination
+	 */
 	bool bEliminated = false;
 
 	FTimerHandle EliminatedTimer;
 	UPROPERTY(EditDefaultsOnly, Category = "Player Stats")
 	float EliminateDelay = 3.f;
 	void EliminateTimerFinished();
-
-	/**
-	 * Dissolve Effects and Elimination
-	 */
+	
 	UPROPERTY(VisibleAnywhere)
 	UTimelineComponent* DissolveTimeline;
 	UPROPERTY(EditAnywhere)
@@ -181,11 +191,11 @@ private:
 	
 public:	
 	void SetOverlappingWeapon(AWeapon* Weapon);
-	bool IsWeaponEquipped();
-	bool IsAiming();
+	bool IsWeaponEquipped() const;
+	bool IsAiming() const;
 	FORCEINLINE float GetAO_Yaw() const { return AO_Yaw; }
 	FORCEINLINE float GetAO_Pitch() const { return AO_Pitch; }
-	AWeapon* GetEquippedWeapon();
+	AWeapon* GetEquippedWeapon() const;
 	FORCEINLINE ETurningInPlace GetTurningInPlace() const { return TurningInPlace; }
 	FVector GetHitTarget() const;
 	FORCEINLINE UCameraComponent* GetFollowCamera() const { return FollowCamera; }
@@ -194,6 +204,9 @@ public:
 	FORCEINLINE float GetHealth() const { return Health; }
 	FORCEINLINE void SetHealth(float NewHealth) { Health = NewHealth; }
 	FORCEINLINE float GetMaxHealth() const { return MaxHealth; }
+	FORCEINLINE float GetShield() const { return Shield; }
+	FORCEINLINE void SetShield(float NewShield) { Shield = NewShield; }
+	FORCEINLINE float GetMaxShield() const { return MaxShield; }
 	FORCEINLINE UCombatComponent* GetCombatComponent() const { return CombatComponent; }
 	FORCEINLINE UBuffComponent* GetBuffComponent() const { return BuffComponent; }
 	FORCEINLINE bool GetDisableGameplay() const { return bDisableGameplay; }

@@ -19,6 +19,7 @@ public:
 	friend AMPCharacter;
 
 	void Heal(float HealAmount, float HealingTime);
+	void ReplenishShield(float ShieldAmount, float ReplenishTime);
 	void BuffSpeed(float WalkBuffSpeed, float CrouchBuffSpeed, float BuffTime);
 	void SetInitialSpeed(float WalkSpeed, float CrouchSpeed, float JumpSpeed);
 	void BuffJump(float JumpSpeed, float BuffTime);
@@ -26,6 +27,7 @@ public:
 protected:
 	virtual void BeginPlay() override;
 	void HealthRampUp(float DeltaTime);
+	void ShieldRampUp(float DeltaTime);
 
 private:
 	UPROPERTY()
@@ -35,6 +37,10 @@ private:
 	float HealingRate = 0;
 	float AmountToHeal = 0.f;
 
+	bool bShieldReplenish = false;
+	float ShieldReplenishRate = 0;
+	float ShieldReplenishAmount = 0.f;
+	
 	FTimerHandle SpeedBuffTimer;
 	void ResetSpeed();
 	float InitialWalkSpeed;

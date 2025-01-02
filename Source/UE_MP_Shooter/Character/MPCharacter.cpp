@@ -70,6 +70,7 @@ void AMPCharacter::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLife
 	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
 	DOREPLIFETIME_CONDITION(AMPCharacter, OverlappingWeapon, COND_OwnerOnly);
 	DOREPLIFETIME(AMPCharacter, Health);
+	DOREPLIFETIME(AMPCharacter, Shield);
 	DOREPLIFETIME(AMPCharacter, bDisableGameplay);
 }
 
@@ -78,6 +79,7 @@ void AMPCharacter::BeginPlay()
 	Super::BeginPlay();
 
 	UpdateHUDHealth();
+	UpdateHUDShield();
 	if (HasAuthority())
 	{
 		OnTakeAnyDamage.AddDynamic(this, &ThisClass::ReceiveDamage);
@@ -572,9 +574,17 @@ void AMPCharacter::ReceiveDamage(AActor* DamageActor, float Damage, const UDamag
                                  AController* InstigatorController, AActor* DamageCauser)
 {
 	if (bEliminated) return;
-	Health = FMath::Clamp(Health - Damage, 0.f, MaxHealth);
-	PlayHitReactMontage();
+	if (Shield > 0.f && Shield >= Damage)
+	{
+		Shield = FMath::Clamp(Shield - Damage, 0.f, MaxShield);
+	} else 
+	{
+		Health = FMath::Clamp(Health + Shield - Damage, 0.f, MaxHealth);
+		Shield = 0.f;
+	}
 	UpdateHUDHealth();
+	UpdateHUDShield();
+	PlayHitReactMontage();
 
 	if (Health <= 0.f)
 	{
@@ -637,26 +647,35 @@ void AMPCharacter::OnRep_Health(float LastHealth)
 	if (Health < LastHealth) PlayHitReactMontage();
 }
 
+void AMPCharacter::OnRep_Shield(float LastShield)
+{
+	UpdateHUDShield();
+	if (Shield < LastShield) PlayHitReactMontage();
+}
+
 void AMPCharacter::UpdateHUDHealth()
 {
 	MPPlayerController = MPPlayerController == nullptr ? Cast<AMPPlayerController>(GetController()) : MPPlayerController;
-	if (MPPlayerController)
-	{
-		MPPlayerController->SetHUDHealth(Health, MaxHealth);
-	}
+	if (MPPlayerController) MPPlayerController->SetHUDHealth(Health, MaxHealth);
 }
 
-bool AMPCharacter::IsWeaponEquipped()
+void AMPCharacter::UpdateHUDShield()
 {
-	return (CombatComponent && CombatComponent->EquippedWeapon);	
+	MPPlayerController = MPPlayerController == nullptr ? Cast<AMPPlayerController>(GetController()) : MPPlayerController;
+	if (MPPlayerController) MPPlayerController->SetHUDShield(Shield, MaxShield);
 }
 
-bool AMPCharacter::IsAiming()
+bool AMPCharacter::IsWeaponEquipped() const
 {
-	return (CombatComponent && CombatComponent->bAiming);
+	return CombatComponent && CombatComponent->EquippedWeapon;	
 }
 
-AWeapon* AMPCharacter::GetEquippedWeapon()
+bool AMPCharacter::IsAiming() const
+{
+	return CombatComponent && CombatComponent->bAiming;
+}
+
+AWeapon* AMPCharacter::GetEquippedWeapon() const
 {
 	return CombatComponent == nullptr ? nullptr : CombatComponent->EquippedWeapon;
 }

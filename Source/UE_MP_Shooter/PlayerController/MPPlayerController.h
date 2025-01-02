@@ -19,6 +19,7 @@ class UE_MP_SHOOTER_API AMPPlayerController : public APlayerController
 
 public:
 	void SetHUDHealth(float Health, float MaxHealth);
+	void SetHUDShield(float Shield, float MaxShield);
 	void SetHUDScore(float Score);
 	void SetHUDDefeats(int32 Defeats);
 	void SetHUDWeaponAmmo(int32 Ammo);
@@ -79,11 +80,16 @@ private:
 
 	UPROPERTY()
 	UCharacterOverlay* CharacterOverlay;
-
-	bool bInitializedCharacterOverlay = false;
+	
 	float HUDHealth;
 	float HUDMaxHealth;
+	bool bInitializeHealth = false;
+	float HUDShield;
+	float HUDMaxShield;
+	bool bInitializeShield = false;
 	float HUDScore;
+	bool bInitializeScore = false;
 	int32 HUDDefeats;
+	bool bInitializeDefeats = false;
 };
 

@@ -43,22 +43,21 @@ void AMPPlayerController::Tick(float DeltaTime)
 
 void AMPPlayerController::InitializeCharacterOverlay()
 {
-	if (CharacterOverlay == nullptr)
+	if (CharacterOverlay != nullptr) return;
+	
+	if (MPHUD && MPHUD->CharacterOverlay)
 	{
-		if (MPHUD && MPHUD->CharacterOverlay)
+		CharacterOverlay = MPHUD->CharacterOverlay;
+		if (CharacterOverlay == nullptr) return;
+		
+		if (bInitializeHealth) SetHUDHealth(HUDHealth, HUDMaxHealth);
+		if (bInitializeShield) SetHUDShield(HUDShield, HUDMaxShield);
+		if (bInitializeScore) SetHUDScore(HUDScore);
+		if (bInitializeDefeats) SetHUDDefeats(HUDDefeats);
+		AMPCharacter* MPCharacter = Cast<AMPCharacter>(GetPawn());
+		if (MPCharacter && MPCharacter->GetCombatComponent())
 		{
-			CharacterOverlay = MPHUD->CharacterOverlay;
-			if (CharacterOverlay)
-			{
-				SetHUDHealth(HUDHealth, HUDMaxHealth);
-				SetHUDScore(HUDScore);
-				SetHUDDefeats(HUDDefeats);
-				AMPCharacter* MPCharacter = Cast<AMPCharacter>(GetPawn());
-				if (MPCharacter && MPCharacter->GetCombatComponent())
-				{
-					SetHUDGrenades(MPCharacter->GetCombatComponent()->GetGrenades());
-				}
-			}
+			SetHUDGrenades(MPCharacter->GetCombatComponent()->GetGrenades());
 		}
 	}
 }
@@ -152,9 +151,26 @@ void AMPPlayerController::SetHUDHealth(float Health, float MaxHealth)
 		MPHUD->CharacterOverlay->HealthText->SetText(FText::FromString(HealthText));
 	} else
 	{
-		bInitializedCharacterOverlay = true;
+		bInitializeHealth = true;
 		HUDHealth = Health;
 		HUDMaxHealth = MaxHealth;
+	}
+}
+
+void AMPPlayerController::SetHUDShield(float Shield, float MaxShield)
+{
+	MPHUD = MPHUD == nullptr ? Cast<AMPHUD>(GetHUD()) : MPHUD;
+	if (MPHUD && MPHUD->CharacterOverlay && MPHUD->CharacterOverlay->ShieldBar && MPHUD->CharacterOverlay->ShieldText)
+	{
+		const float ShieldPercent = Shield / MaxShield;
+		MPHUD->CharacterOverlay->ShieldBar->SetPercent(ShieldPercent);
+		FString ShieldText = FString::Printf(TEXT("%d/%d"), FMath::CeilToInt(Shield), FMath::CeilToInt(MaxShield));
+		MPHUD->CharacterOverlay->ShieldText->SetText(FText::FromString(ShieldText));
+	} else
+	{
+		bInitializeShield = true;
+		HUDShield = Shield;
+		HUDMaxShield = MaxShield;
 	}
 }
 
@@ -166,7 +182,7 @@ void AMPPlayerController::SetHUDScore(float Score)
 		MPHUD->CharacterOverlay->ScoreAmount->SetText(FText::FromString(FString::FromInt(FMath::CeilToInt(Score))));
 	} else
 	{
-		bInitializedCharacterOverlay = true;
+		bInitializeScore = true;
 		HUDScore = Score;
 	}
 }
@@ -179,7 +195,7 @@ void AMPPlayerController::SetHUDDefeats(int32 Defeats)
 		MPHUD->CharacterOverlay->DefeatsAmount->SetText(FText::FromString(FString::FromInt(Defeats)));
 	} else
 	{
-		bInitializedCharacterOverlay = true;
+		bInitializeDefeats = true;
 		HUDDefeats = Defeats;
 	}
 }
