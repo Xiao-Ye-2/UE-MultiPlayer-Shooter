@@ -7,6 +7,8 @@
 #include "Pickup.generated.h"
 
 class USphereComponent;
+class UNiagaraComponent;
+class UNiagaraSystem;
 
 UCLASS()
 class UE_MP_SHOOTER_API APickup : public AActor
@@ -33,9 +35,13 @@ private:
 
 	UPROPERTY(EditAnywhere)
 	USoundCue* PickupSound;
-
 	UPROPERTY(EditAnywhere)
 	UStaticMeshComponent* PickupMesh;
+
+	UPROPERTY(VisibleAnywhere)
+	UNiagaraComponent* PickupEffectComponent;
+	UPROPERTY(EditAnywhere)
+	UNiagaraSystem* PickupEffect;
 public:	
 
 };

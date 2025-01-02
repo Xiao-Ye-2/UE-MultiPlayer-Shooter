@@ -19,6 +19,9 @@ public:
 	friend AMPCharacter;
 
 	void Heal(float HealAmount, float HealingTime);
+	void BuffSpeed(float WalkBuffSpeed, float CrouchBuffSpeed, float BuffTime);
+	void SetInitialSpeed(float WalkSpeed, float CrouchSpeed, float JumpSpeed);
+	void BuffJump(float JumpSpeed, float BuffTime);
 
 protected:
 	virtual void BeginPlay() override;
@@ -31,6 +34,19 @@ private:
 	bool bHealing = false;
 	float HealingRate = 0;
 	float AmountToHeal = 0.f;
+
+	FTimerHandle SpeedBuffTimer;
+	void ResetSpeed();
+	float InitialWalkSpeed;
+	float InitialCrouchSpeed;
+	UFUNCTION(NetMulticast, reliable)
+	void MulticastSpeedBuff(float WalkSpeed, float CrouchSpeed);
+
+	FTimerHandle JumpBuffTimer;
+	void ResetJump();
+	float InitialJumpSpeed;
+	UFUNCTION(NetMulticast, reliable)
+	void MulticastJumpBuff(float JumpSpeed);
 
 public:	
 	virtual void TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) override;

@@ -1,4 +1,6 @@
 #include "BuffComponent.h"
+
+#include "GameFramework/CharacterMovementComponent.h"
 #include "UE_MP_Shooter/Character/MPCharacter.h"
 
 UBuffComponent::UBuffComponent()
@@ -45,5 +47,50 @@ void UBuffComponent::HealthRampUp(float DeltaTime)
 	}
 }
 
+void UBuffComponent::SetInitialSpeed(float WalkSpeed, float CrouchSpeed, float JumpSpeed)
+{
+	InitialWalkSpeed = WalkSpeed;
+	InitialCrouchSpeed = CrouchSpeed;
+	InitialJumpSpeed = JumpSpeed;
+}
 
+void UBuffComponent::BuffSpeed(float WalkBuffSpeed, float CrouchBuffSpeed, float BuffTime)
+{
+	if (Character == nullptr) return;
+	Character->GetWorldTimerManager().SetTimer(SpeedBuffTimer, this, &ThisClass::ResetSpeed, BuffTime);
+	MulticastSpeedBuff_Implementation(WalkBuffSpeed, CrouchBuffSpeed);
+	MulticastSpeedBuff(WalkBuffSpeed, CrouchBuffSpeed);
+}
 
+void UBuffComponent::ResetSpeed()
+{
+	MulticastSpeedBuff_Implementation(InitialWalkSpeed, InitialCrouchSpeed);
+	MulticastSpeedBuff(InitialWalkSpeed, InitialCrouchSpeed);
+}
+
+void UBuffComponent::MulticastSpeedBuff_Implementation(float WalkSpeed, float CrouchSpeed)
+{
+	if (Character == nullptr || Character->GetCharacterMovement() == nullptr) return;
+	Character->GetCharacterMovement()->MaxWalkSpeed = WalkSpeed;
+	Character->GetCharacterMovement()->MaxWalkSpeedCrouched = CrouchSpeed;
+}
+
+void UBuffComponent::BuffJump(float JumpSpeed, float BuffTime)
+{
+	if (Character == nullptr) return;
+	Character->GetWorldTimerManager().SetTimer(JumpBuffTimer, this, &ThisClass::ResetJump, BuffTime);
+	MulticastJumpBuff_Implementation(JumpSpeed);
+	MulticastJumpBuff(JumpSpeed);
+}
+
+void UBuffComponent::ResetJump()
+{
+	MulticastJumpBuff_Implementation(InitialJumpSpeed);
+	MulticastJumpBuff(InitialJumpSpeed);
+}
+
+void UBuffComponent::MulticastJumpBuff_Implementation(float JumpSpeed)
+{
+	if (Character == nullptr || Character->GetCharacterMovement() == nullptr) return;
+	Character->GetCharacterMovement()->JumpZVelocity = JumpSpeed;
+}

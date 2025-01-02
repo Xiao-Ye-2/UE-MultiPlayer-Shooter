@@ -191,7 +191,11 @@ void AMPCharacter::PostInitializeComponents()
 	Super::PostInitializeComponents();
 
 	if (CombatComponent) CombatComponent->Character = this;
-	if (BuffComponent) BuffComponent->Character = this;
+	if (BuffComponent)
+	{
+		BuffComponent->Character = this;
+		BuffComponent->SetInitialSpeed(GetCharacterMovement()->MaxWalkSpeed, GetCharacterMovement()->MaxWalkSpeedCrouched, GetCharacterMovement()->JumpZVelocity);
+	}
 }
 
 void AMPCharacter::OnRep_ReplicatedMovement()

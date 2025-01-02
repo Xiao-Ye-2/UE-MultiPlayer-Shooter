@@ -4,26 +4,23 @@
 
 #include "CoreMinimal.h"
 #include "Pickup.h"
-#include "HealthPickup.generated.h"
+#include "JumpPickup.generated.h"
 
 /**
  * 
  */
 UCLASS()
-class UE_MP_SHOOTER_API AHealthPickup : public APickup
+class UE_MP_SHOOTER_API AJumpPickup : public APickup
 {
 	GENERATED_BODY()
-
-public:
-	AHealthPickup();
 
 protected:
 	virtual void OnSphereOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult) override;
 
 private:
 	UPROPERTY(EditAnywhere)
-	float HealAmount = 100.f;
+	float JumpZVelocityBuff = 3000.f;
 	UPROPERTY(EditAnywhere)
-	float HealingTime = 5.f;
+	float JumpBuffTime = 30.f;
 
 };
