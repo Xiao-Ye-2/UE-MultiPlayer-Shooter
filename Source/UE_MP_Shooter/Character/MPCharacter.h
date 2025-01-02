@@ -10,6 +10,8 @@
 #include "UE_MP_Shooter/MPTypes/TurningInPlace.h"
 #include "MPCharacter.generated.h"
 
+class UCombatComponent;
+class UBuffComponent;
 class AMPPlayerState;
 class FOnTimelineFloat;
 class AMPPlayerController;
@@ -29,6 +31,7 @@ public:
 	void PlayReloadMontage();
 	void PlayEliminateMontage();
 	void PlayThrowGrenadeMontage();
+	void UpdateHUDHealth();
 	virtual void OnRep_ReplicatedMovement() override;
 	virtual void Destroyed() override;
 
@@ -67,7 +70,6 @@ protected:
 	void FireButtonReleased();
 	void GrenadeButtonPressed();
 	void PlayHitReactMontage();
-	void UpdateHUDHealth();
 
 	UFUNCTION()
 	void ReceiveDamage(AActor* DamageActor, float Damage, const UDamageType* DamageType, AController* InstigatorController, AActor* DamageCauser);
@@ -91,7 +93,9 @@ private:
 	void OnRep_OverlappingWeapon(AWeapon* LastWeapon) const;
 
 	UPROPERTY(VisibleAnywhere, blueprintReadOnly, meta = (AllowPrivateAccess = true))
-	class UCombatComponent* CombatComponent;
+	UCombatComponent* CombatComponent;
+	UPROPERTY(VisibleAnywhere, blueprintReadOnly, meta = (AllowPrivateAccess = true))
+	UBuffComponent* BuffComponent;
 
 	UFUNCTION(Server, Reliable)
 	void ServerEquipButtonPressed();
@@ -136,7 +140,7 @@ private:
 	float Health = 100.f;
 
 	UFUNCTION()
-	void OnRep_Health();
+	void OnRep_Health(float LastHealth);
 
 	UPROPERTY()
 	AMPPlayerController* MPPlayerController;
@@ -188,8 +192,10 @@ public:
 	FORCEINLINE bool ShouldRotateRootBone() const { return bRotateRootBone; }
 	FORCEINLINE bool IsEliminated() const { return bEliminated; }
 	FORCEINLINE float GetHealth() const { return Health; }
+	FORCEINLINE void SetHealth(float NewHealth) { Health = NewHealth; }
 	FORCEINLINE float GetMaxHealth() const { return MaxHealth; }
 	FORCEINLINE UCombatComponent* GetCombatComponent() const { return CombatComponent; }
+	FORCEINLINE UBuffComponent* GetBuffComponent() const { return BuffComponent; }
 	FORCEINLINE bool GetDisableGameplay() const { return bDisableGameplay; }
 	FORCEINLINE UAnimMontage* GetReloadMontage() const { return ReloadMontage; }
 	FORCEINLINE UStaticMeshComponent* GetAttachedGrenade() const { return AttachedGrenade; }

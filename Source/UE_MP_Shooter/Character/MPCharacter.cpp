@@ -16,6 +16,7 @@
 #include "UE_MP_Shooter/UE_MP_Shooter.h"
 #include "UE_MP_Shooter/GameMode/BlasterGameMode.h"
 #include "UE_MP_Shooter/MPComponents/CombatComponent.h"
+#include "UE_MP_Shooter/MPComponents/BuffComponent.h"
 #include "UE_MP_Shooter/PlayerController/MPPlayerController.h"
 #include "UE_MP_Shooter/PlayerState/MPPlayerState.h"
 #include "UE_MP_Shooter/Weapon/Weapon.h"
@@ -42,6 +43,9 @@ AMPCharacter::AMPCharacter()
 
 	CombatComponent = CreateDefaultSubobject<UCombatComponent>(TEXT("CombatComponent"));
 	CombatComponent->SetIsReplicated(true);
+
+	BuffComponent = CreateDefaultSubobject<UBuffComponent>(TEXT("BuffComponent"));
+	BuffComponent->SetIsReplicated(true);
 
 	AttachedGrenade = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("AttachedGrenade"));
 	AttachedGrenade->SetupAttachment(GetMesh(), FName("RightHandSocket"));
@@ -186,10 +190,8 @@ void AMPCharacter::PostInitializeComponents()
 {
 	Super::PostInitializeComponents();
 
-	if (CombatComponent)
-	{
-		CombatComponent->Character = this;
-	}
+	if (CombatComponent) CombatComponent->Character = this;
+	if (BuffComponent) BuffComponent->Character = this;
 }
 
 void AMPCharacter::OnRep_ReplicatedMovement()
@@ -625,10 +627,10 @@ void AMPCharacter::OnRep_OverlappingWeapon(AWeapon* LastWeapon) const
 	}
 }
 
-void AMPCharacter::OnRep_Health()
+void AMPCharacter::OnRep_Health(float LastHealth)
 {
-	PlayHitReactMontage();
 	UpdateHUDHealth();
+	if (Health < LastHealth) PlayHitReactMontage();
 }
 
 void AMPCharacter::UpdateHUDHealth()
