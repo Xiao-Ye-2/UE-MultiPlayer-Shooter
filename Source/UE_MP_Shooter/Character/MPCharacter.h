@@ -274,5 +274,6 @@ public:
 	FORCEINLINE UAnimMontage* GetReloadMontage() const { return ReloadMontage; }
 	FORCEINLINE UStaticMeshComponent* GetAttachedGrenade() const { return AttachedGrenade; }
 	FORCEINLINE bool IsLocallyReloading() const { return CombatComponent == nullptr ? false : CombatComponent->bLocallyReloading; }
+	FORCEINLINE ULagCompensationComponent* GetLagCompensationComponent() const { return LagCompensationComponent; }
 	ECombatStates GetCombatState() const;
 };

@@ -41,6 +41,7 @@ public:
 	void HighPingWarning();
 	void StopHighPingWarning();
 
+	float SingleTripTime = 0.f;
 protected:
 	virtual void BeginPlay() override;
 	void SetHUDTime();

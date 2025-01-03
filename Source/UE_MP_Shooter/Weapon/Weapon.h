@@ -80,7 +80,11 @@ public:
 	EFireType FireType = EFireType::EFT_HitScan;
 protected:
 	virtual void BeginPlay() override;
-
+	UPROPERTY()
+	AMPCharacter* OwnerCharacter;
+	UPROPERTY()
+	AMPPlayerController* OwnerController;
+	
 	UFUNCTION()
 	virtual void OnSphereOverlap(
 		UPrimitiveComponent* OverlappedComponent,
@@ -103,6 +107,10 @@ protected:
 	UPROPERTY(EditAnywhere, Category = "Weapon Scatter")
 	bool bUseScatter = false;
 
+	UPROPERTY(EditAnywhere)
+	float Damage = 20.f;
+	UPROPERTY(EditAnywhere)
+	bool bUseServerSideRewind = false;
 private:
 	UPROPERTY(VisibleAnywhere, Category = "Weapon Properties")
 	USkeletalMeshComponent* WeaponMesh;
@@ -149,13 +157,10 @@ private:
 	
 	UPROPERTY(EditAnywhere)
 	int32 MagCapacity;
-
-	UPROPERTY()
-	AMPCharacter* OwnerCharacter;
-	UPROPERTY()
-	AMPPlayerController* OwnerController;
+	
 	UPROPERTY(EditAnywhere)
 	EWeaponType WeaponType;
+
 public:
 	void SetWeaponState(EWeaponStates State);
 	FORCEINLINE USphereComponent* GetAreaSphere() { return AreaSphere; }
@@ -168,6 +173,7 @@ public:
 	FORCEINLINE bool IsEmpty() const { return Ammo <= 0; }
 	FORCEINLINE bool IsFull() const { return Ammo >= MagCapacity; }
 	FORCEINLINE bool IsUsingScatter() const { return bUseScatter; }
+	FORCEINLINE float GetDamage() const { return Damage; }
 };
 
 

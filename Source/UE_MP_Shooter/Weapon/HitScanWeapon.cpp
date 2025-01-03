@@ -8,6 +8,8 @@
 #include "Particles/ParticleSystemComponent.h"
 #include "Sound/SoundCue.h"
 #include "UE_MP_Shooter/Character/MPCharacter.h"
+#include "UE_MP_Shooter/MPComponents/LagCompensationComponent.h"
+#include "UE_MP_Shooter/PlayerController/MPPlayerController.h"
 
 void AHitScanWeapon::Fire(const FVector& HitTarget)
 {
@@ -35,9 +37,18 @@ void AHitScanWeapon::Fire(const FVector& HitTarget)
 	}
 	
 	AMPCharacter* MPCharacter = Cast<AMPCharacter>(Hit.GetActor());
-	if (MPCharacter && HasAuthority() && OwnerPawnController)
+	if (MPCharacter == nullptr || OwnerPawnController == nullptr) return;
+	if (HasAuthority())
 	{
 		UGameplayStatics::ApplyDamage(MPCharacter, Damage, OwnerPawnController, this, UDamageType::StaticClass());
+	}
+	if (!HasAuthority() && bUseServerSideRewind)
+	{
+		OwnerCharacter = OwnerCharacter == nullptr ? Cast<AMPCharacter>(OwnerPawn) : OwnerCharacter;
+		OwnerController = OwnerController == nullptr ? Cast<AMPPlayerController>(OwnerPawnController) : OwnerController;
+		if (OwnerCharacter == nullptr || OwnerController == nullptr || OwnerCharacter->GetLagCompensationComponent() == nullptr) return;
+		OwnerCharacter->GetLagCompensationComponent()->ServerScoreRequest(MPCharacter, Start, HitTarget,
+			OwnerController->GetServerTime() - OwnerController->SingleTripTime);
 	}
 }
 
