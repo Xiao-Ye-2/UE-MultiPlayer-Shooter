@@ -30,12 +30,16 @@ public:
 	void virtual OnPossess(APawn* InPawn) override;
 	virtual void Tick(float DeltaTime) override;
 	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
+	void CheckPing(float DeltaTime);
 	void CheckTimeSync(float DeltaTime);
 	virtual float GetServerTime();
 	virtual void ReceivedPlayer() override;
 	void OnMatchStateSet(FName State);
 	void HandleCooldown();
 	void HandleInProgress();
+
+	void HighPingWarning();
+	void StopHighPingWarning();
 
 protected:
 	virtual void BeginPlay() override;
@@ -95,5 +99,14 @@ private:
 	bool bInitializeCarriedAmmo = false;
 	float HUDWeaponAmmo;
 	bool bInitializeWeaponAmmo = false;
+
+	float HighPingWarningTime = 0.f;
+	float PingAnimRunningTime = 0.f;
+	UPROPERTY(EditAnywhere)
+	float HighPingDuration = 5.f;
+	UPROPERTY(EditAnywhere)
+	float CheckPingFrequency = 20.f;
+	UPROPERTY(EditAnywhere)
+	float HighPingThreshold = 50.f;
 };
 

@@ -3,6 +3,7 @@
 
 #include "MPPlayerController.h"
 
+#include "Components/Image.h"
 #include "Components/ProgressBar.h"
 #include "Components/TextBlock.h"
 #include "GameFramework/GameMode.h"
@@ -39,6 +40,7 @@ void AMPPlayerController::Tick(float DeltaTime)
 	SetHUDTime();
 	CheckTimeSync(DeltaTime);
 	InitializeCharacterOverlay();
+	CheckPing(DeltaTime);
 }
 
 void AMPPlayerController::InitializeCharacterOverlay()
@@ -71,6 +73,24 @@ void AMPPlayerController::CheckTimeSync(float DeltaTime)
 	{
 		ServerRequestServerTime(GetWorld()->GetTimeSeconds());
 		TimeSyncTime -= TimeSyncFrequency;
+	}
+}
+
+void AMPPlayerController::CheckPing(float DeltaTime)
+{
+	HighPingWarningTime += DeltaTime;
+	if (MPHUD && MPHUD->CharacterOverlay && MPHUD->CharacterOverlay->HighPingAnimation &&  MPHUD->CharacterOverlay->IsAnimationPlaying(MPHUD->CharacterOverlay->HighPingAnimation))
+	{
+		PingAnimRunningTime += DeltaTime;
+		if (PingAnimRunningTime <= HighPingDuration) return;
+		PingAnimRunningTime -= HighPingDuration;
+		StopHighPingWarning();
+	}
+	if (HighPingWarningTime > CheckPingFrequency)
+	{
+		HighPingWarningTime -= CheckPingFrequency;
+		if (PlayerState == nullptr || PlayerState->GetPingInMilliseconds() <= HighPingThreshold) return;
+		HighPingWarning();
 	}
 }
 
@@ -269,6 +289,29 @@ void AMPPlayerController::SetHUDGrenades(uint32 grenades)
 	if (MPHUD && MPHUD->CharacterOverlay && MPHUD->CharacterOverlay->GrenadesText)
 	{
 		MPHUD->CharacterOverlay->GrenadesText->SetText(FText::FromString(FString::FromInt(grenades)));
+	}
+}
+
+void AMPPlayerController::HighPingWarning()
+{
+	MPHUD = MPHUD == nullptr ? Cast<AMPHUD>(GetHUD()) : MPHUD;
+	if (MPHUD && MPHUD->CharacterOverlay && MPHUD->CharacterOverlay->HighPingImage && MPHUD->CharacterOverlay->HighPingAnimation) 
+	{
+		MPHUD->CharacterOverlay->HighPingImage->SetOpacity(1);
+		MPHUD->CharacterOverlay->PlayAnimation(MPHUD->CharacterOverlay->HighPingAnimation, 0.f, 5.f);
+	}
+}
+
+void AMPPlayerController::StopHighPingWarning()
+{
+	MPHUD = MPHUD == nullptr ? Cast<AMPHUD>(GetHUD()) : MPHUD;
+	if (MPHUD && MPHUD->CharacterOverlay && MPHUD->CharacterOverlay->HighPingImage && MPHUD->CharacterOverlay->HighPingAnimation) 
+	{
+		MPHUD->CharacterOverlay->HighPingImage->SetOpacity(0);
+		if (MPHUD->CharacterOverlay->IsAnimationPlaying(MPHUD->CharacterOverlay->HighPingAnimation))
+		{
+			MPHUD->CharacterOverlay->StopAnimation(MPHUD->CharacterOverlay->HighPingAnimation);
+		}
 	}
 }
 
