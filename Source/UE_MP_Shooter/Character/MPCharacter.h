@@ -6,10 +6,13 @@
 #include "Components/TimelineComponent.h"
 #include "GameFramework/Character.h"
 #include "UE_MP_Shooter/Interfaces/InteractWithCrosshairInterface.h"
+#include "UE_MP_Shooter/MPComponents/CombatComponent.h"
 #include "UE_MP_Shooter/MPTypes/ECombatStates.h"
 #include "UE_MP_Shooter/MPTypes/TurningInPlace.h"
 #include "MPCharacter.generated.h"
 
+class ULagCompensationComponent;
+class UBoxComponent;
 class UCombatComponent;
 class UBuffComponent;
 class AMPPlayerState;
@@ -49,6 +52,9 @@ public:
 	UFUNCTION(BlueprintImplementableEvent)
 	void ShowSniperScopeWidget(bool bShowScope);
 
+	UPROPERTY()
+	TMap<FName, UBoxComponent*> HitCollisionBoxes;
+
 protected:
 	virtual void BeginPlay() override;
 
@@ -73,10 +79,58 @@ protected:
 	void GrenadeButtonPressed();
 	void PlayHitReactMontage();
 
+	void PollAndInitialize();
 	UFUNCTION()
 	void ReceiveDamage(AActor* DamageActor, float Damage, const UDamageType* DamageType, AController* InstigatorController, AActor* DamageCauser);
+	
+	/**
+	 * Hit Boxes
+	 */
+	UPROPERTY(EditAnywhere)
+	UBoxComponent* head;
 
-	void PollAndInitialize();
+	UPROPERTY(EditAnywhere)
+	UBoxComponent* pelvis;
+
+	UPROPERTY(EditAnywhere)
+	UBoxComponent* spine_02;
+	UPROPERTY(EditAnywhere)
+	UBoxComponent* spine_03;
+
+	UPROPERTY(EditAnywhere)
+	UBoxComponent* upperarm_l;
+	UPROPERTY(EditAnywhere)
+	UBoxComponent* upperarm_r;
+
+	UPROPERTY(EditAnywhere)
+	UBoxComponent* lowerarm_l;
+	UPROPERTY(EditAnywhere)
+	UBoxComponent* lowerarm_r;
+
+	UPROPERTY(EditAnywhere)
+	UBoxComponent* hand_l;
+	UPROPERTY(EditAnywhere)
+	UBoxComponent* hand_r;
+
+	UPROPERTY(EditAnywhere)
+	UBoxComponent* backpack;
+	UPROPERTY(EditAnywhere)
+	UBoxComponent* blanket;
+
+	UPROPERTY(EditAnywhere)
+	UBoxComponent* thigh_l;
+	UPROPERTY(EditAnywhere)
+	UBoxComponent* thigh_r;
+
+	UPROPERTY(EditAnywhere)
+	UBoxComponent* calf_l;
+	UPROPERTY(EditAnywhere)
+	UBoxComponent* calf_r;
+	
+	UPROPERTY(EditAnywhere)
+	UBoxComponent* foot_l;
+	UPROPERTY(EditAnywhere)
+	UBoxComponent* foot_r;
 
 private:
 	UPROPERTY(VisibleAnywhere, Category = Camera)
@@ -98,6 +152,8 @@ private:
 	UCombatComponent* CombatComponent;
 	UPROPERTY(VisibleAnywhere, blueprintReadOnly, meta = (AllowPrivateAccess = true))
 	UBuffComponent* BuffComponent;
+	UPROPERTY(VisibleAnywhere, blueprintReadOnly, meta = (AllowPrivateAccess = true))
+	ULagCompensationComponent* LagCompensationComponent;
 
 	UFUNCTION()
 	void OnRep_OverlappingWeapon(AWeapon* LastWeapon) const;
@@ -217,5 +273,6 @@ public:
 	FORCEINLINE bool GetDisableGameplay() const { return bDisableGameplay; }
 	FORCEINLINE UAnimMontage* GetReloadMontage() const { return ReloadMontage; }
 	FORCEINLINE UStaticMeshComponent* GetAttachedGrenade() const { return AttachedGrenade; }
+	FORCEINLINE bool IsLocallyReloading() const { return CombatComponent == nullptr ? false : CombatComponent->bLocallyReloading; }
 	ECombatStates GetCombatState() const;
 };

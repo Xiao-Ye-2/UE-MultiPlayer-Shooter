@@ -76,4 +76,8 @@ void UMPAnimInstance::NativeUpdateAnimation(float DeltaSeconds)
 	bUseFABRIK = MPCharacter->GetCombatState() == ECombatStates::ECS_Unoccupied;
 	bUseAimOffsets = MPCharacter->GetCombatState() == ECombatStates::ECS_Unoccupied && !MPCharacter->GetDisableGameplay();
 	bTransformRightHand = MPCharacter->GetCombatState() == ECombatStates::ECS_Unoccupied && !MPCharacter->GetDisableGameplay();
+	if (MPCharacter->IsLocallyControlled() && MPCharacter->GetCombatState() != ECombatStates::ECS_ThrowingGrenade)
+	{
+		bUseFABRIK = !MPCharacter->IsLocallyReloading();
+	}
 }
