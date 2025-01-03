@@ -14,6 +14,15 @@ class UWidgetComponent;
 class UAnimationAsset;
 
 UENUM(BlueprintType)
+enum class EFireType : uint8
+{
+	EFT_HitScan UMETA(DisplayName = "Hit Scan Weapon"),
+	EFT_Projectile UMETA(DisplayName = "Projectile Weapon"),
+	EFT_Shotgun UMETA(DisplayName = "Shotgun Weapon"),
+	
+	EFT_MAX UMETA(DisplayName = "Max")
+};
+UENUM(BlueprintType)
 enum class EWeaponStates : uint8
 {
 	EWS_Initial UMETA(DisplayName = "Initial State"),
@@ -33,14 +42,15 @@ public:
 	AWeapon();
 	virtual void Tick(float DeltaTime) override;
 	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
-	void SetDefaultCustomDepthEnabled();
-	virtual void OnRep_Owner() override;
-	void ShowPickupWidget(bool bShowWidget);
 	virtual void Fire(const FVector& HitTarget);
+	virtual void OnRep_Owner() override;
+	void SetDefaultCustomDepthEnabled();
+	void ShowPickupWidget(bool bShowWidget);
 	void Drop();
 	void SetHUDWeaponAmmo();
 	void AddAmmo(int32 Amount);
-	void EnabledCustomDepth(bool bEnabled);
+	void EnabledCustomDepth(bool bEnabled) const;
+	FVector TraceEndWithScatter(const FVector& HitTarget) const;
 
 	/**
 	 * Textures for the weapon crosshairs
@@ -66,6 +76,8 @@ public:
 	USoundCue* EquipSound;
 
 	bool bDestroyWeaponWhenDrop = false;
+	UPROPERTY(EditAnywhere, Category = "Combat")
+	EFireType FireType = EFireType::EFT_HitScan;
 protected:
 	virtual void BeginPlay() override;
 
@@ -83,6 +95,13 @@ protected:
 		AActor* OtherActor,
 		UPrimitiveComponent* OtherComp,
 		int32 OtherBodyIndex);
+
+	UPROPERTY(EditAnywhere, Category = "Weapon Scatter")
+	float DistanceToSphere = 800.f;
+	UPROPERTY(EditAnywhere, Category = "Weapon Scatter")
+	float SphereRadius = 75.f;
+	UPROPERTY(EditAnywhere, Category = "Weapon Scatter")
+	bool bUseScatter = false;
 
 private:
 	UPROPERTY(VisibleAnywhere, Category = "Weapon Properties")
@@ -118,12 +137,15 @@ private:
 	 * Ammo Settings
 	 */
 	
-	UPROPERTY(EditAnywhere, ReplicatedUsing = OnRep_Ammo)
+	UPROPERTY(EditAnywhere)
 	int32 Ammo;
-
-	UFUNCTION()
-	void OnRep_Ammo();
 	void SpendRound();
+	UFUNCTION(Client, reliable)
+	void ClientUpdateAmmo(int32 ServerAmmo);
+	UFUNCTION(Client, reliable)
+	void ClientAddAmmo(int32 AmmoToAdd);
+
+	int32 Sequence = 0; // Number of unprocessed server request for Ammo.
 	
 	UPROPERTY(EditAnywhere)
 	int32 MagCapacity;
@@ -132,10 +154,8 @@ private:
 	AMPCharacter* OwnerCharacter;
 	UPROPERTY()
 	AMPPlayerController* OwnerController;
-
 	UPROPERTY(EditAnywhere)
 	EWeaponType WeaponType;
-	
 public:
 	void SetWeaponState(EWeaponStates State);
 	FORCEINLINE USphereComponent* GetAreaSphere() { return AreaSphere; }
@@ -147,6 +167,7 @@ public:
 	FORCEINLINE int32 GetAmmo() const { return Ammo; }
 	FORCEINLINE bool IsEmpty() const { return Ammo <= 0; }
 	FORCEINLINE bool IsFull() const { return Ammo >= MagCapacity; }
+	FORCEINLINE bool IsUsingScatter() const { return bUseScatter; }
 };
 
 

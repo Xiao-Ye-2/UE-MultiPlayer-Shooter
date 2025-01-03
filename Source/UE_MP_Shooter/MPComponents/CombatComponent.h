@@ -49,13 +49,21 @@ protected:
 	void OnRep_SecondaryWeapon();
 	void EquipPrimaryWeapon(AWeapon* WeaponToEquip);
 	void EquipSecondaryWeapon(AWeapon* WeaponToEquip);
-	void Fire();
+	
 	bool CanFire() const;
-
+	void Fire();
+	void FireSingleBulletWeapon();
+	void FireShotgunWeapon();
 	UFUNCTION(Server, Reliable)
 	void ServerFire(const FVector_NetQuantize& TraceHitTarget);
 	UFUNCTION(NetMulticast, Reliable)
 	void MulticastFire(const FVector_NetQuantize& TraceHitTarget);
+	void LocalFire(const FVector_NetQuantize& TraceHitTarget);
+	UFUNCTION(Server, Reliable)
+	void ServerShotgunFire(const TArray<FVector_NetQuantize>& TraceHitTargets);
+	UFUNCTION(NetMulticast, Reliable)
+	void MulticastShotgunFire(const TArray<FVector_NetQuantize>& TraceHitTargets);
+	void LocalShotgunFire(const TArray<FVector_NetQuantize>& TraceHitTargets);
 
 	UFUNCTION(Server, Reliable)
 	void ServerReload();
@@ -188,4 +196,3 @@ public:
 	FORCEINLINE int32 GetGrenades() const { return Grenades; }
 	FORCEINLINE bool ShouldSwapWeapons() const { return EquippedWeapon != nullptr && SecondaryWeapon != nullptr; }
 };
-

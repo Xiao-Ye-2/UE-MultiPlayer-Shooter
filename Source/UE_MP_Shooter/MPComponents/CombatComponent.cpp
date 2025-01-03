@@ -15,6 +15,7 @@
 #include "TimerManager.h"
 #include "Sound/SoundCue.h"
 #include "UE_MP_Shooter/Weapon/Projectile.h"
+#include "UE_MP_Shooter/Weapon/Shotgun.h"
 
 UCombatComponent::UCombatComponent()
 {
@@ -76,20 +77,43 @@ void UCombatComponent::FireButtonPressed(bool bPressed)
 	}
 }
 
-void UCombatComponent::Fire()
-{
-	if (!CanFire()) return;
-	bCanFire = false;
-	ServerFire(HitTarget);
-	CrosshairShootingFactor = EquippedWeapon ? 0.75f : CrosshairShootingFactor;
-	StartFireTimer();
-}
-
 bool UCombatComponent::CanFire() const
 {
 	if (EquippedWeapon == nullptr) return false;
 	if (!EquippedWeapon->IsEmpty() && bCanFire && CombatState == ECombatStates::ECS_Reloading && EquippedWeapon->GetWeaponType() == EWeaponType::EWT_Shotgun) return true;
 	return bCanFire && !EquippedWeapon->IsEmpty() && CombatState == ECombatStates::ECS_Unoccupied;
+}
+
+void UCombatComponent::Fire()
+{
+	if (!CanFire()) return;
+	bCanFire = false;
+	StartFireTimer();
+	if (EquippedWeapon == nullptr) return;
+	
+	CrosshairShootingFactor = 0.75f;
+	if (EquippedWeapon->FireType == EFireType::EFT_Projectile || EquippedWeapon->FireType == EFireType::EFT_HitScan)
+		FireSingleBulletWeapon();
+	else if (EquippedWeapon->FireType == EFireType::EFT_Shotgun) 
+		FireShotgunWeapon();
+}
+
+void UCombatComponent::FireSingleBulletWeapon()
+{
+	if (EquippedWeapon == nullptr || Character == nullptr) return;
+	HitTarget = EquippedWeapon->IsUsingScatter() ? EquippedWeapon->TraceEndWithScatter(HitTarget) : HitTarget;
+	if (!Character->HasAuthority()) LocalFire(HitTarget);
+	ServerFire(HitTarget);
+}
+
+void UCombatComponent::FireShotgunWeapon()
+{
+	AShotgun* Shotgun = Cast<AShotgun>(EquippedWeapon);
+	if (Shotgun == nullptr || Character == nullptr) return;
+	TArray<FVector_NetQuantize> HitTargets;
+	Shotgun->ShotgunTraceEndWithScatter(HitTarget, HitTargets);
+	if (!Character->HasAuthority()) LocalShotgunFire(HitTargets);
+	ServerShotgunFire(HitTargets);
 }
 
 void UCombatComponent::StartFireTimer()
@@ -116,12 +140,36 @@ void UCombatComponent::ServerFire_Implementation(const FVector_NetQuantize& Trac
 
 void UCombatComponent::MulticastFire_Implementation(const FVector_NetQuantize& TraceHitTarget)
 {
-	if (Character == nullptr) return;
-	if ((CombatState == ECombatStates::ECS_Unoccupied && EquippedWeapon) ||
-		(CombatState == ECombatStates::ECS_Reloading && EquippedWeapon->GetWeaponType() == EWeaponType::EWT_Shotgun))
+	if (Character && Character->IsLocallyControlled() && !Character->HasAuthority()) return;
+	LocalFire(TraceHitTarget);
+}
+
+void UCombatComponent::LocalFire(const FVector_NetQuantize& TraceHitTarget)
+{
+	if (Character == nullptr || EquippedWeapon == nullptr || CombatState != ECombatStates::ECS_Unoccupied) return;
+	Character->PlayFireMontage(bAiming);
+	EquippedWeapon->Fire(TraceHitTarget);
+}
+
+void UCombatComponent::ServerShotgunFire_Implementation(const TArray<FVector_NetQuantize>& TraceHitTargets)
+{
+	MulticastShotgunFire(TraceHitTargets);
+}
+
+void UCombatComponent::MulticastShotgunFire_Implementation(const TArray<FVector_NetQuantize>& TraceHitTargets)
+{
+	if (Character && Character->IsLocallyControlled() && !Character->HasAuthority()) return;
+	LocalShotgunFire(TraceHitTargets);
+}
+
+void UCombatComponent::LocalShotgunFire(const TArray<FVector_NetQuantize>& TraceHitTargets)
+{
+	AShotgun* Shotgun = Cast<AShotgun>(EquippedWeapon);
+	if (Character == nullptr || Shotgun == nullptr) return;
+	if (CombatState == ECombatStates::ECS_Unoccupied || CombatState == ECombatStates::ECS_Reloading)
 	{
 		Character->PlayFireMontage(bAiming);
-		EquippedWeapon->Fire(TraceHitTarget);
+		Shotgun->FireShotgun(TraceHitTargets);
 		CombatState = ECombatStates::ECS_Unoccupied;
 	}
 }
@@ -186,7 +234,7 @@ void UCombatComponent::DropEquippedWeapon() const
 
 void UCombatComponent::SwapWeapons()
 {
-	if (EquippedWeapon == nullptr || SecondaryWeapon == nullptr) return;
+	if (EquippedWeapon == nullptr || SecondaryWeapon == nullptr || CombatState != ECombatStates::ECS_Unoccupied) return;
 	AWeapon* TempWeapon = EquippedWeapon;
 	EquippedWeapon = SecondaryWeapon;
 	SecondaryWeapon = TempWeapon;
