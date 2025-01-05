@@ -129,18 +129,17 @@ FFramePackage ULagCompensationComponent::InterpBetweenFrames(const FFramePackage
 
 FFramePackage ULagCompensationComponent::GetFrameToCheck(AMPCharacter* HitCharacter, float HitTime)
 {
-	if (HitCharacter == nullptr || HitCharacter->GetLagCompensationComponent() || HitCharacter->GetLagCompensationComponent()->FrameHistory.GetHead() == nullptr) return FFramePackage();
+	if (HitCharacter == nullptr || HitCharacter->GetLagCompensationComponent() == nullptr || HitCharacter->GetLagCompensationComponent()->FrameHistory.GetHead() == nullptr) return FFramePackage();
 	const TDoubleLinkedList<FFramePackage>& History = HitCharacter->GetLagCompensationComponent()->FrameHistory;
 	const float OldTime = History.GetTail()->GetValue().Time;
-	// const float NewTime = History.GetHead()->GetValue().Time;
 	if (OldTime > HitTime) return FFramePackage(); // Too far back in time
 	
 	auto NewerPointer = History.GetHead();
 	auto OlderPointer = NewerPointer;
 	while (OlderPointer->GetValue().Time > HitTime)
 	{
-		if (OlderPointer->GetNextNode() == nullptr)
-			OlderPointer = OlderPointer->GetNextNode();
+		if (OlderPointer->GetNextNode() == nullptr) break;
+		OlderPointer = OlderPointer->GetNextNode();
 		if (OlderPointer->GetValue().Time > HitTime) NewerPointer = OlderPointer;
 	}
 	
@@ -324,10 +323,10 @@ void ULagCompensationComponent::ShotgunServerScoreRequest_Implementation(
 	for (auto& HitCharacter : HitCharacters)
 	{
 		const float HeadShotDamage = Confirm.HeadShots.Contains(HitCharacter)
-			? Confirm.HeadShots[HitCharacter] * Character->GetEquippedWeapon()->GetDamage()
+			? Confirm.HeadShots[HitCharacter] * HitCharacter->GetEquippedWeapon()->GetDamage()
 			: 0.f;
 		const float BodyShotDamage = Confirm.BodyShots.Contains(HitCharacter)
-			? Confirm.BodyShots[HitCharacter] * Character->GetEquippedWeapon()->GetDamage()
+			? Confirm.BodyShots[HitCharacter] * HitCharacter->GetEquippedWeapon()->GetDamage()
 			: 0.f;
 		const float TotalDamage = HeadShotDamage + BodyShotDamage;
 		UGameplayStatics::ApplyDamage(HitCharacter, TotalDamage, Character->Controller, Character->GetEquippedWeapon(), UDamageType::StaticClass());

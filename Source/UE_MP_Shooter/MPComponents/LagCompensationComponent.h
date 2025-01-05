@@ -122,7 +122,7 @@ private:
 
 	TDoubleLinkedList<FFramePackage> FrameHistory;
 	UPROPERTY()
-	float MaxRecordTime = 3.f;
+	float MaxRecordTime = 1.5f;
 public:	
 
 		
