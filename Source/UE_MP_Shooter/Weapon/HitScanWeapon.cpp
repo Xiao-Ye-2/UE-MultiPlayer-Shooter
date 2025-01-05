@@ -38,11 +38,11 @@ void AHitScanWeapon::Fire(const FVector& HitTarget)
 	
 	AMPCharacter* MPCharacter = Cast<AMPCharacter>(Hit.GetActor());
 	if (MPCharacter == nullptr || OwnerPawnController == nullptr) return;
-	if (HasAuthority())
+	if (HasAuthority() && (!bUseServerSideRewind || OwnerPawn->IsLocallyControlled()))
 	{
-		UGameplayStatics::ApplyDamage(MPCharacter, Damage, OwnerPawnController, this, UDamageType::StaticClass());
+		UGameplayStatics::ApplyDamage(MPCharacter, GetDamage(), OwnerPawnController, this, UDamageType::StaticClass());
 	}
-	if (!HasAuthority() && bUseServerSideRewind)
+	else if (!HasAuthority() && bUseServerSideRewind)
 	{
 		OwnerCharacter = OwnerCharacter == nullptr ? Cast<AMPCharacter>(OwnerPawn) : OwnerCharacter;
 		OwnerController = OwnerController == nullptr ? Cast<AMPPlayerController>(OwnerPawnController) : OwnerController;

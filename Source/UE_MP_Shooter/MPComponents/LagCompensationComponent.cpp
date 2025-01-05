@@ -84,7 +84,7 @@ void ULagCompensationComponent::MoveBoxes(AMPCharacter* HitCharacter, const FFra
 	if (HitCharacter == nullptr) return;
 	for (auto& HitBoxPair : HitCharacter->HitCollisionBoxes)
 	{
-		if (HitBoxPair.Value == nullptr) continue;
+		if (HitBoxPair.Value == nullptr || !Package.HitBoxInfo.Contains(HitBoxPair.Key)) continue;
 		HitBoxPair.Value->SetWorldLocation(Package.HitBoxInfo[HitBoxPair.Key].Location);
 		HitBoxPair.Value->SetWorldRotation(Package.HitBoxInfo[HitBoxPair.Key].Rotation);
 		HitBoxPair.Value->SetBoxExtent(Package.HitBoxInfo[HitBoxPair.Key].BoxExtent);
