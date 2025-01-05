@@ -323,10 +323,10 @@ void ULagCompensationComponent::ShotgunServerScoreRequest_Implementation(
 	for (auto& HitCharacter : HitCharacters)
 	{
 		const float HeadShotDamage = Confirm.HeadShots.Contains(HitCharacter)
-			? Confirm.HeadShots[HitCharacter] * HitCharacter->GetEquippedWeapon()->GetDamage()
+			? Confirm.HeadShots[HitCharacter] * Character->GetEquippedWeapon()->GetDamage()
 			: 0.f;
 		const float BodyShotDamage = Confirm.BodyShots.Contains(HitCharacter)
-			? Confirm.BodyShots[HitCharacter] * HitCharacter->GetEquippedWeapon()->GetDamage()
+			? Confirm.BodyShots[HitCharacter] * Character->GetEquippedWeapon()->GetDamage()
 			: 0.f;
 		const float TotalDamage = HeadShotDamage + BodyShotDamage;
 		UGameplayStatics::ApplyDamage(HitCharacter, TotalDamage, Character->Controller, Character->GetEquippedWeapon(), UDamageType::StaticClass());
