@@ -9,6 +9,8 @@
 #include "Particles/ParticleSystemComponent.h"
 #include "Sound/SoundCue.h"
 #include "UE_MP_Shooter/Character/MPCharacter.h"
+#include "UE_MP_Shooter/MPComponents/LagCompensationComponent.h"
+#include "UE_MP_Shooter/PlayerController/MPPlayerController.h"
 
 void AShotgun::FireShotgun(const TArray<FVector_NetQuantize>& HitTargets)
 {
@@ -34,12 +36,25 @@ void AShotgun::FireShotgun(const TArray<FVector_NetQuantize>& HitTargets)
 			else BulletsHitMap.Emplace(MPCharacter, 1);
 		}
 	}
+
+	TArray<AMPCharacter*> HitCharacters;
 	for (auto HitPair : BulletsHitMap)
 	{
-		if (HitPair.Key && HasAuthority() && OwnerPawnController)
+		if (HitPair.Key == nullptr || OwnerPawnController == nullptr) return;
+		HitCharacters.Add(HitPair.Key);
+		if (HasAuthority() && (!bUseServerSideRewind || OwnerPawn->IsLocallyControlled()))
 		{
-			UGameplayStatics::ApplyDamage(HitPair.Key, Damage * HitPair.Value, OwnerPawnController, this, UDamageType::StaticClass());
+			UGameplayStatics::ApplyDamage(HitPair.Key, GetDamage() * HitPair.Value, OwnerPawnController, this, UDamageType::StaticClass());
 		}
+	}
+
+	if (!HasAuthority() && bUseServerSideRewind)
+	{
+		OwnerCharacter = OwnerCharacter == nullptr ? Cast<AMPCharacter>(OwnerPawn) : OwnerCharacter;
+		OwnerController = OwnerController == nullptr ? Cast<AMPPlayerController>(OwnerPawnController) : OwnerController;
+		if (OwnerCharacter == nullptr || OwnerController == nullptr || OwnerCharacter->GetLagCompensationComponent() == nullptr || !OwnerCharacter->IsLocallyControlled()) return;
+		OwnerCharacter->GetLagCompensationComponent()->ShotgunServerScoreRequest(HitCharacters, Start, HitTargets,
+			OwnerController->GetServerTime() - OwnerController->SingleTripTime);
 	}
 }
 

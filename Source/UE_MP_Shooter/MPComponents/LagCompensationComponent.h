@@ -27,6 +27,8 @@ struct FFramePackage
 
 	UPROPERTY()
 	float Time;
+	UPROPERTY()
+	AMPCharacter* Character;
 
 	TMap<FName, FBoxInformation> HitBoxInfo;
 };
@@ -120,7 +122,7 @@ private:
 
 	TDoubleLinkedList<FFramePackage> FrameHistory;
 	UPROPERTY()
-	float MaxRecordTime = 1.5f;
+	float MaxRecordTime = 3.f;
 public:	
 
 		

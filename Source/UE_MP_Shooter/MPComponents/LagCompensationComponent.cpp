@@ -4,6 +4,7 @@
 #include "Components/BoxComponent.h"
 #include "Kismet/GameplayStatics.h"
 #include "Serialization/MappedName.h"
+#include "UE_MP_Shooter/UE_MP_Shooter.h"
 #include "UE_MP_Shooter/Character/MPCharacter.h"
 #include "UE_MP_Shooter/Weapon/Weapon.h"
 
@@ -47,6 +48,7 @@ void ULagCompensationComponent::SaveFramePackage(FFramePackage& Package)
 	Character = Character == nullptr ? Cast<AMPCharacter>(GetOwner()) : Character;
 	if (Character == nullptr) return;
 	Package.Time = GetWorld()->GetTimeSeconds();
+	Package.Character = Character;
 	for (auto& BoxPair : Character->HitCollisionBoxes)
 	{
 		FBoxInformation BoxInformation;
@@ -68,6 +70,7 @@ void ULagCompensationComponent::ShowFramePackage(const FFramePackage& Package, c
 void ULagCompensationComponent::CacheBoxPositions(AMPCharacter* HitCharacter, FFramePackage& OutFramePackage)
 {
 	if (HitCharacter == nullptr) return;
+	OutFramePackage.Character = HitCharacter;
 	for (auto& HitBoxPair : HitCharacter->HitCollisionBoxes)
 	{
 		if (HitBoxPair.Value == nullptr) continue;
@@ -107,6 +110,7 @@ FFramePackage ULagCompensationComponent::InterpBetweenFrames(const FFramePackage
 	if (InterpFraction <= 0.f) return OlderFrame;
 	FFramePackage InterpFramePackage;
 	InterpFramePackage.Time = HitTime;
+	InterpFramePackage.Character = YoungerFrame.Character;
 
 	for (auto& YoungerBoxPair : YoungerFrame.HitBoxInfo)
 	{
@@ -128,7 +132,7 @@ FFramePackage ULagCompensationComponent::GetFrameToCheck(AMPCharacter* HitCharac
 	if (HitCharacter == nullptr || HitCharacter->GetLagCompensationComponent() || HitCharacter->GetLagCompensationComponent()->FrameHistory.GetHead() == nullptr) return FFramePackage();
 	const TDoubleLinkedList<FFramePackage>& History = HitCharacter->GetLagCompensationComponent()->FrameHistory;
 	const float OldTime = History.GetTail()->GetValue().Time;
-	const float NewTime = History.GetHead()->GetValue().Time;
+	// const float NewTime = History.GetHead()->GetValue().Time;
 	if (OldTime > HitTime) return FFramePackage(); // Too far back in time
 	
 	auto NewerPointer = History.GetHead();
@@ -140,8 +144,11 @@ FFramePackage ULagCompensationComponent::GetFrameToCheck(AMPCharacter* HitCharac
 		if (OlderPointer->GetValue().Time > HitTime) NewerPointer = OlderPointer;
 	}
 	
-	if (HitTime >= NewerPointer->GetValue().Time) return  History.GetHead()->GetValue();
-	return InterpBetweenFrames(OlderPointer->GetValue(), NewerPointer->GetValue(), HitTime);
+	FFramePackage FrameToCheck = HitTime >= NewerPointer->GetValue().Time
+		? History.GetHead()->GetValue()
+		: InterpBetweenFrames(OlderPointer->GetValue(), NewerPointer->GetValue(), HitTime);
+	FrameToCheck.Character = HitCharacter; // Optional but safety guard.
+	return FrameToCheck;
 }
 
 FServerSideRewindResult ULagCompensationComponent::ConfirmHit(const FFramePackage& Package, AMPCharacter* HitCharacter,
@@ -162,7 +169,7 @@ FServerSideRewindResult ULagCompensationComponent::ConfirmHit(const FFramePackag
 	FHitResult ConfirmHitResult;
 	const FVector TraceEnd = TraceStart + (HitLocation - TraceStart) * 1.25f;
 	World->LineTraceSingleByChannel(ConfirmHitResult, TraceStart, TraceEnd, ECC_Visibility);
-	if (ConfirmHitResult.bBlockingHit)
+	if (ConfirmHitResult.bBlockingHit && ConfirmHitResult.GetActor() == HitCharacter)
 	{
 		Result = FServerSideRewindResult{true, true};
 	} else // Check the body
@@ -174,11 +181,96 @@ FServerSideRewindResult ULagCompensationComponent::ConfirmHit(const FFramePackag
 			HitBoxPair.Value->SetCollisionResponseToChannel(ECC_Visibility, ECR_Block);
 		}
 		World->LineTraceSingleByChannel(ConfirmHitResult, TraceStart, TraceEnd, ECC_Visibility);
-		if (ConfirmHitResult.bBlockingHit) Result = FServerSideRewindResult{true, false};
+		if (ConfirmHitResult.bBlockingHit && ConfirmHitResult.GetActor() == HitCharacter) Result = FServerSideRewindResult{true, false};
 	}
 	MoveBoxes(HitCharacter, CurrentFrame, true);
 	EnableCharacterMeshCollision(HitCharacter, ECollisionEnabled::QueryAndPhysics);
 	return Result;
+}
+
+FShotgunServerSideRewindResult ULagCompensationComponent::ShotgunConfirmHit(const TArray<FFramePackage>& FramePackages,
+	const FVector_NetQuantize& TraceStart, const TArray<FVector_NetQuantize>& HitLocations)
+{
+	for (auto& Frame : FramePackages) if (Frame.Character == nullptr) {
+		if (GEngine)
+		{
+			FString DebugMessage = TEXT("Character is nullptr for Frame");
+			GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Red, DebugMessage);
+		}
+		return FShotgunServerSideRewindResult();
+	};
+	UWorld* World = GetWorld();
+	if (World == nullptr) return FShotgunServerSideRewindResult();
+	
+	FShotgunServerSideRewindResult ShotgunResult;
+	TArray<FFramePackage> CurrentFrames;
+	TArray<AMPCharacter*> HitCharacters;
+	for (auto& Frame : FramePackages)
+	{
+		FFramePackage CurrentFrame;
+		CacheBoxPositions(Frame.Character, CurrentFrame);
+		MoveBoxes(Frame.Character, Frame);
+		EnableCharacterMeshCollision(Frame.Character, ECollisionEnabled::NoCollision);
+		CurrentFrames.Add(CurrentFrame);
+		HitCharacters.Emplace(Frame.Character);
+
+		// Enable Collision for head
+		UBoxComponent* HeadBox = Frame.Character->HitCollisionBoxes[FName("head")];
+		HeadBox->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
+		HeadBox->SetCollisionResponseToChannel(ECC_Visibility, ECR_Block);
+	}
+
+	for (auto& HitLocation : HitLocations)
+	{
+		FHitResult ConfirmHitResult;
+		const FVector TraceEnd = TraceStart + (HitLocation - TraceStart) * 1.25f;
+		World->LineTraceSingleByChannel(ConfirmHitResult, TraceStart, TraceEnd, ECC_Visibility);
+		if (ConfirmHitResult.bBlockingHit)
+		{
+			AMPCharacter* HitCharacter = Cast<AMPCharacter>(ConfirmHitResult.GetActor());
+			if (HitCharacter == nullptr || !HitCharacters.Contains(HitCharacter)) continue;
+			
+			if (ShotgunResult.HeadShots.Contains(HitCharacter)) ShotgunResult.HeadShots[HitCharacter]++;
+			else ShotgunResult.HeadShots.Emplace(HitCharacter, 1);
+		}
+	}
+
+	// Enable collision for all boxes, then disable for head box
+	for (auto& Frame : FramePackages)
+	{
+		for (auto& HitBoxPair : Frame.Character->HitCollisionBoxes)
+		{
+			if (HitBoxPair.Value == nullptr) continue;
+			HitBoxPair.Value->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
+			HitBoxPair.Value->SetCollisionResponseToChannel(ECC_HitBox, ECR_Block);
+		}
+		UBoxComponent* HeadBox = Frame.Character->HitCollisionBoxes[FName("head")];
+		HeadBox->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+	}
+	
+	// check for body shots
+	for (auto& HitLocation : HitLocations)
+	{
+		FHitResult ConfirmHitResult;
+		const FVector TraceEnd = TraceStart + (HitLocation - TraceStart) * 1.25f;
+		World->LineTraceSingleByChannel(ConfirmHitResult, TraceStart, TraceEnd, ECC_Visibility);
+		if (ConfirmHitResult.bBlockingHit)
+		{
+			AMPCharacter* HitCharacter = Cast<AMPCharacter>(ConfirmHitResult.GetActor());
+			if (HitCharacter == nullptr || !HitCharacters.Contains(HitCharacter)) continue;
+			
+			if (ShotgunResult.BodyShots.Contains(HitCharacter)) ShotgunResult.BodyShots[HitCharacter]++;
+			else ShotgunResult.BodyShots.Emplace(HitCharacter, 1);
+		}
+	}
+
+	for (auto& CurrentFrame : CurrentFrames)
+	{
+		MoveBoxes(CurrentFrame.Character, CurrentFrame, true);
+		EnableCharacterMeshCollision(CurrentFrame.Character, ECollisionEnabled::QueryAndPhysics);
+	}
+
+	return ShotgunResult;
 }
 
 FServerSideRewindResult ULagCompensationComponent::ProjectileConfirmHit(const FFramePackage& Package,
@@ -188,17 +280,29 @@ FServerSideRewindResult ULagCompensationComponent::ProjectileConfirmHit(const FF
 	return FServerSideRewindResult{true, true};
 }
 
-FShotgunServerSideRewindResult ULagCompensationComponent::ShotgunConfirmHit(const TArray<FFramePackage>& FramePackages,
-	const FVector_NetQuantize& TraceStart, const TArray<FVector_NetQuantize>& HitLocations)
-{
-	return FShotgunServerSideRewindResult();
-}
-
 FServerSideRewindResult ULagCompensationComponent::ServerSideRewind(AMPCharacter* HitCharacter,
                                                                     const FVector_NetQuantize& TraceStart, const FVector_NetQuantize& HitLocation, float HitTime)
 {
 	FFramePackage FrameToCheck = GetFrameToCheck(HitCharacter, HitTime);
 	return ConfirmHit(FrameToCheck, HitCharacter, TraceStart, HitLocation);
+}
+
+FShotgunServerSideRewindResult ULagCompensationComponent::ShotgunServerSideRewind(
+	const TArray<AMPCharacter*>& HitCharacters, const FVector_NetQuantize& TraceStart,
+	const TArray<FVector_NetQuantize>& HitLocations, float HitTime)
+{
+	TArray<FFramePackage> FramesToCheck;
+	for (AMPCharacter* HitCharacter : HitCharacters)
+	{
+		FramesToCheck.Add(GetFrameToCheck(HitCharacter, HitTime));
+	}
+	return ShotgunConfirmHit(FramesToCheck, TraceStart, HitLocations);
+}
+
+FServerSideRewindResult ULagCompensationComponent::ProjectileServerSideRewind(AMPCharacter* HitCharacter,
+	const FVector_NetQuantize& TraceStart, const FVector_NetQuantize100& InitialVelocity, float HitTime)
+{
+	return FServerSideRewindResult();
 }
 
 void ULagCompensationComponent::ServerScoreRequest_Implementation(AMPCharacter* HitCharacter,
@@ -210,26 +314,27 @@ void ULagCompensationComponent::ServerScoreRequest_Implementation(AMPCharacter* 
 	UGameplayStatics::ApplyDamage(HitCharacter, Damage, Character->Controller, Character->GetEquippedWeapon(), UDamageType::StaticClass());
 }
 
-FServerSideRewindResult ULagCompensationComponent::ProjectileServerSideRewind(AMPCharacter* HitCharacter,
-	const FVector_NetQuantize& TraceStart, const FVector_NetQuantize100& InitialVelocity, float HitTime)
+void ULagCompensationComponent::ShotgunServerScoreRequest_Implementation(
+	const TArray<AMPCharacter*>& HitCharacters, const FVector_NetQuantize& TraceStart,
+	const TArray<FVector_NetQuantize>& HitLocations, float HitTime)
 {
-	return FServerSideRewindResult();
+	FShotgunServerSideRewindResult Confirm = ShotgunServerSideRewind(HitCharacters, TraceStart, HitLocations, HitTime);
+	if (Character == nullptr || Character->GetEquippedWeapon() == nullptr) return;
+
+	for (auto& HitCharacter : HitCharacters)
+	{
+		const float HeadShotDamage = Confirm.HeadShots.Contains(HitCharacter)
+			? Confirm.HeadShots[HitCharacter] * Character->GetEquippedWeapon()->GetDamage()
+			: 0.f;
+		const float BodyShotDamage = Confirm.BodyShots.Contains(HitCharacter)
+			? Confirm.BodyShots[HitCharacter] * Character->GetEquippedWeapon()->GetDamage()
+			: 0.f;
+		const float TotalDamage = HeadShotDamage + BodyShotDamage;
+		UGameplayStatics::ApplyDamage(HitCharacter, TotalDamage, Character->Controller, Character->GetEquippedWeapon(), UDamageType::StaticClass());
+	}
 }
 
 void ULagCompensationComponent::ProjectileServerScoreRequest_Implementation(AMPCharacter* HitCharacter,
 	const FVector_NetQuantize& TraceStart, const FVector_NetQuantize100& InitialVelocity, float HitTime)
-{
-}
-
-FShotgunServerSideRewindResult ULagCompensationComponent::ShotgunServerSideRewind(
-	const TArray<AMPCharacter*>& HitCharacters, const FVector_NetQuantize& TraceStart,
-	const TArray<FVector_NetQuantize>& HitLocations, float HitTime)
-{
-	return FShotgunServerSideRewindResult();
-}
-
-void ULagCompensationComponent::ShotgunServerScoreRequest_Implementation(
-	const TArray<AMPCharacter*>& HitCharacters, const FVector_NetQuantize& TraceStart,
-	const TArray<FVector_NetQuantize>& HitLocations, float HitTime)
 {
 }

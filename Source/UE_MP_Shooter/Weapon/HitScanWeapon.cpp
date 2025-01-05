@@ -46,7 +46,7 @@ void AHitScanWeapon::Fire(const FVector& HitTarget)
 	{
 		OwnerCharacter = OwnerCharacter == nullptr ? Cast<AMPCharacter>(OwnerPawn) : OwnerCharacter;
 		OwnerController = OwnerController == nullptr ? Cast<AMPPlayerController>(OwnerPawnController) : OwnerController;
-		if (OwnerCharacter == nullptr || OwnerController == nullptr || OwnerCharacter->GetLagCompensationComponent() == nullptr) return;
+		if (OwnerCharacter == nullptr || OwnerController == nullptr || OwnerCharacter->GetLagCompensationComponent() == nullptr || !OwnerCharacter->IsLocallyControlled()) return;
 		OwnerCharacter->GetLagCompensationComponent()->ServerScoreRequest(MPCharacter, Start, HitTarget,
 			OwnerController->GetServerTime() - OwnerController->SingleTripTime);
 	}
