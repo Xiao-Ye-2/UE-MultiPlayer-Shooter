@@ -111,6 +111,8 @@ protected:
 	float Damage = 20.f;
 	UPROPERTY(Replicated, EditAnywhere)
 	bool bUseServerSideRewind = false;
+	UFUNCTION()
+	void OnPingHigh(bool bPingHigh);
 private:
 	UPROPERTY(VisibleAnywhere, Category = "Weapon Properties")
 	USkeletalMeshComponent* WeaponMesh;

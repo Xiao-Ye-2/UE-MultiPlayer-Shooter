@@ -9,8 +9,10 @@
 class ABlasterGameMode;
 class UCharacterOverlay;
 class AMPHUD;
+
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FHighPingDelegate, bool, bPingHigh);
 /**
- * 
+ *
  */
 UCLASS()
 class UE_MP_SHOOTER_API AMPPlayerController : public APlayerController
@@ -42,6 +44,8 @@ public:
 	void StopHighPingWarning();
 
 	float SingleTripTime = 0.f;
+
+	FHighPingDelegate HighPingDelegate;
 protected:
 	virtual void BeginPlay() override;
 	void SetHUDTime();
@@ -106,8 +110,11 @@ private:
 	UPROPERTY(EditAnywhere)
 	float HighPingDuration = 5.f;
 	UPROPERTY(EditAnywhere)
-	float CheckPingFrequency = 20.f;
+	float CheckPingFrequency = 10.f;
 	UPROPERTY(EditAnywhere)
 	float HighPingThreshold = 50.f;
+
+	UFUNCTION(Server, Reliable)
+	void ServerReportPintStatus(bool bHighPing);
 };
 

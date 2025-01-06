@@ -431,31 +431,32 @@ void AMPCharacter::PlayReloadMontage()
 void AMPCharacter::PlayEliminateMontage()
 {
 	UAnimInstance* AnimInstance = GetMesh()->GetAnimInstance();
-	if (AnimInstance && ElimMontage)
-	{
-		AnimInstance->Montage_Play(ElimMontage);
-	}
+	if (AnimInstance == nullptr || ElimMontage == nullptr) return;
+	AnimInstance->Montage_Play(ElimMontage);
 }
 
 void AMPCharacter::PlayThrowGrenadeMontage()
 {
 	UAnimInstance* AnimInstance = GetMesh()->GetAnimInstance();
-	if (AnimInstance && ThrowGrenadeMontage)
-	{
-		AnimInstance->Montage_Play(ThrowGrenadeMontage);
-	}
+	if (AnimInstance == nullptr || ThrowGrenadeMontage == nullptr) return;
+	AnimInstance->Montage_Play(ThrowGrenadeMontage);
+}
+
+void AMPCharacter::PlaySwapMontage()
+{
+	UAnimInstance* AnimInstance = GetMesh()->GetAnimInstance();
+	if (AnimInstance == nullptr || SwapMontage == nullptr) return;
+	AnimInstance->Montage_Play(SwapMontage);
 }
 
 void AMPCharacter::PlayHitReactMontage()
 {
 	if (CombatComponent == nullptr || CombatComponent->EquippedWeapon == nullptr) return;
 	UAnimInstance* AnimInstance = GetMesh()->GetAnimInstance();
-	if (AnimInstance && HitReactMontage)
-	{
-		AnimInstance->Montage_Play(HitReactMontage);
-		FName SectionName = FName("FromFront");
-		AnimInstance->Montage_JumpToSection(SectionName);
-	}
+	if (AnimInstance == nullptr || HitReactMontage == nullptr) return;
+	AnimInstance->Montage_Play(HitReactMontage);
+	FName SectionName = FName("FromFront");
+	AnimInstance->Montage_JumpToSection(SectionName);
 }
 
 void AMPCharacter::MoveForward(float Value)
@@ -504,8 +505,15 @@ void AMPCharacter::Jump()
 
 void AMPCharacter::EquipButtonPressed()
 {
-	if (bDisableGameplay) return;
-	ServerEquipButtonPressed();
+	if (bDisableGameplay || CombatComponent == nullptr) return;
+	if (CombatComponent->CombatState == ECombatStates::ECS_Unoccupied) ServerEquipButtonPressed();
+	if (CombatComponent->ShouldSwapWeapons() && !HasAuthority()
+		&& CombatComponent->CombatState == ECombatStates::ECS_Unoccupied && OverlappingWeapon == nullptr)
+	{
+		PlaySwapMontage();
+		bFinishedSwapping = false;
+		CombatComponent->CombatState = ECombatStates::ECS_SwappingWeapons;
+	}
 }
 
 void AMPCharacter::ServerEquipButtonPressed_Implementation()

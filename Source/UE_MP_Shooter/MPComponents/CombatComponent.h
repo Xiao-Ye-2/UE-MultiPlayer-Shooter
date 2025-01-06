@@ -34,6 +34,10 @@ public:
 	void FinishReloading();
 	UFUNCTION(BlueprintCallable)
 	void ShotgunShellReload();
+	UFUNCTION(BlueprintCallable)
+	void FinishSwap();
+	UFUNCTION(BlueprintCallable)
+	void FinishSwapAttachedWeapons();
 	void JumpToShotgunEnd() const;
 
 	void PickupAmmo(EWeaponType WeaponType, int32 Amount);

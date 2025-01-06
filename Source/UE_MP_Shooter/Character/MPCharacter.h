@@ -34,6 +34,7 @@ public:
 	void PlayReloadMontage();
 	void PlayEliminateMontage();
 	void PlayThrowGrenadeMontage();
+	void PlaySwapMontage();
 	void UpdateHUDHealth();
 	void UpdateHUDShield();
 	void SpawnDefaultWeapon();
@@ -48,13 +49,13 @@ public:
 	AMPPlayerState* MPPlayerState;
 	UPROPERTY(Replicated)
 	bool bDisableGameplay = false;
+	bool bFinishedSwapping = false;
 
 	UFUNCTION(BlueprintImplementableEvent)
 	void ShowSniperScopeWidget(bool bShowScope);
 
 	UPROPERTY()
 	TMap<FName, UBoxComponent*> HitCollisionBoxes;
-
 protected:
 	virtual void BeginPlay() override;
 
@@ -179,6 +180,8 @@ private:
 	UAnimMontage* FireWeaponMontage;
 	UPROPERTY(EditAnywhere, Category = Combat)
 	UAnimMontage* ThrowGrenadeMontage;
+	UPROPERTY(EditAnywhere, Category = Combat)
+	UAnimMontage* SwapMontage;
 
 	UPROPERTY(EditAnywhere, Category = Combat)
 	float CameraThreshold;

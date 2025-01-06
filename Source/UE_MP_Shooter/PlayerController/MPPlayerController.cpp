@@ -89,10 +89,24 @@ void AMPPlayerController::CheckPing(float DeltaTime)
 	if (HighPingWarningTime > CheckPingFrequency)
 	{
 		HighPingWarningTime -= CheckPingFrequency;
-		if (PlayerState == nullptr || PlayerState->GetPingInMilliseconds() <= HighPingThreshold) return;
-		HighPingWarning();
+		const float Ping = PlayerState->GetPingInMilliseconds();
+		if (PlayerState == nullptr) return;
+		if (Ping <= HighPingThreshold)
+		{
+			ServerReportPintStatus(false);
+		} else
+		{
+			HighPingWarning();
+			if (Ping >= 2 * HighPingThreshold) ServerReportPintStatus(true);
+		}
 	}
 }
+
+void AMPPlayerController::ServerReportPintStatus_Implementation(bool bHighPing)
+{
+	HighPingDelegate.Broadcast(bHighPing);
+}
+
 
 void AMPPlayerController::ReceivedPlayer()
 {
