@@ -15,11 +15,14 @@ class UE_MP_SHOOTER_API AProjectileWeapon : public AWeapon
 {
 	GENERATED_BODY()
 
+public:
+	virtual void Fire(const FVector& HitTarget) override;
+	
 private:
 	UPROPERTY(EditAnywhere)
 	TSubclassOf<AProjectile> ProjectileClass;
 
-public:
-	virtual void Fire(const FVector& HitTarget) override;
+	UPROPERTY(EditAnywhere)
+	TSubclassOf<AProjectile> NoReplicationProjectileClass;
 	
 };
