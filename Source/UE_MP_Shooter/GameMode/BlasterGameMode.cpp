@@ -78,8 +78,29 @@ void ABlasterGameMode::PlayerEliminated(AMPCharacter* EliminatedCharacter,
 
 	if (AttackerPlayerState && AttackerPlayerState != EliminatedPlayerState && MPGameState)
 	{
+		TArray<AMPPlayerState*> CurrentLeadingPlayerStates;
+		for (auto Lead : MPGameState->TopScoringPlayers)
+		{
+			CurrentLeadingPlayerStates.AddUnique(Lead);
+		}
+		
 		AttackerPlayerState->AddToScore(1.f);
 		MPGameState->UpdateTopScore(AttackerPlayerState);
+
+		if (MPGameState->TopScoringPlayers.Contains(AttackerPlayerState))
+		{
+			if (AMPCharacter* WinningCharacter =  Cast<AMPCharacter>(AttackerPlayerState->GetPawn()))
+				WinningCharacter->MulticastGainedTheLead();
+		}
+		for (int32 i = 0; i < CurrentLeadingPlayerStates.Num(); i++)
+		{
+			if (!MPGameState->TopScoringPlayers.Contains(CurrentLeadingPlayerStates[i]))
+			{
+				AMPCharacter* LosingCharacter = Cast<AMPCharacter>(CurrentLeadingPlayerStates[i]->GetPawn());
+				if (LosingCharacter == nullptr) continue;
+				LosingCharacter->MulticastLostTheLead();
+			}
+		}
 	}
 	if (EliminatedPlayerState)
 	{
@@ -88,6 +109,15 @@ void ABlasterGameMode::PlayerEliminated(AMPCharacter* EliminatedCharacter,
 	if (EliminatedCharacter)
 	{
 		EliminatedCharacter->Eliminate(false);
+	}
+
+	for (FConstPlayerControllerIterator It = GetWorld()->GetPlayerControllerIterator(); It; ++It)
+	{
+		AMPPlayerController* Controller = Cast<AMPPlayerController>(*It);
+		if (Controller && AttackerPlayerState && EliminatedPlayerState)
+		{
+			Controller->BroadcastElim(AttackerPlayerState, EliminatedPlayerState);
+		}
 	}
 }
 

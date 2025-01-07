@@ -18,6 +18,8 @@ class UBuffComponent;
 class AMPPlayerState;
 class FOnTimelineFloat;
 class AMPPlayerController;
+class UNiagaraSystem;
+class UNiagaraComponent;
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnLeftGame);
 
@@ -62,6 +64,11 @@ public:
 
 	UPROPERTY()
 	TMap<FName, UBoxComponent*> HitCollisionBoxes;
+
+	UFUNCTION(NetMulticast, Reliable)
+	void MulticastGainedTheLead();
+	UFUNCTION(NetMulticast, Reliable)
+	void MulticastLostTheLead();
 protected:
 	virtual void BeginPlay() override;
 
@@ -252,6 +259,11 @@ private:
 	UParticleSystem* EliminationEffect;
 	UPROPERTY(EditAnywhere, Category = "Elimination")
 	USoundCue* EliminationEffectSound;
+
+	UPROPERTY(EditAnywhere)
+	UNiagaraSystem* CrownSystem;
+	UPROPERTY()
+	UNiagaraComponent* CrownComponent;
 
 	bool bLeftGame = false;
 

@@ -47,6 +47,8 @@ public:
 	float SingleTripTime = 0.f;
 
 	FHighPingDelegate HighPingDelegate;
+	
+	void BroadcastElim(APlayerState* Attacker, APlayerState* Victim);
 protected:
 	virtual void BeginPlay() override;
 	virtual void SetupInputComponent() override;
@@ -72,7 +74,8 @@ protected:
 	void ClientJoinMidGame(FName StateOfMatch, float Warmup, float Match, float Cooldown, float StartingTime);
 	
 	void ShowReturnToMainMenu();
-
+	UFUNCTION(Client, Reliable)
+	void ClientElimAnnouncement(APlayerState* Attacker, APlayerState* Victim);
 private:
 	UPROPERTY()
 	AMPHUD* MPHUD;

@@ -448,3 +448,37 @@ void AMPPlayerController::ClientJoinMidGame_Implementation(FName StateOfMatch, f
 		MPHUD->AddAnnouncement();
 	}
 }
+
+void AMPPlayerController::BroadcastElim(APlayerState* Attacker, APlayerState* Victim)
+{
+	ClientElimAnnouncement(Attacker, Victim);
+}
+
+void AMPPlayerController::ClientElimAnnouncement_Implementation(APlayerState* Attacker, APlayerState* Victim)
+{
+	APlayerState* SelfState = GetPlayerState<APlayerState>();
+	if (Attacker == nullptr || Victim == nullptr || SelfState == nullptr) return;
+	MPHUD = MPHUD == nullptr ? Cast<AMPHUD>(GetHUD()) : MPHUD;
+	if (MPHUD == nullptr) return;
+
+	if (Attacker == SelfState && Victim != SelfState)
+	{
+		MPHUD->AddElimAnnouncement("You", Victim->GetPlayerName());
+	}
+	else if (Victim == SelfState && Attacker != SelfState)
+	{
+		MPHUD->AddElimAnnouncement(Attacker->GetPlayerName(), "You");
+	}
+	else if (Attacker == Victim && Attacker == SelfState)
+	{
+		MPHUD->AddElimAnnouncement("You", "Yourself");
+	}
+	else if (Attacker == Victim && Attacker != SelfState)
+	{
+		MPHUD->AddElimAnnouncement(Attacker->GetPlayerName(), "Themselves");
+	}
+	else
+	{
+		MPHUD->AddElimAnnouncement(Attacker->GetPlayerName(), Victim->GetPlayerName());
+	}
+}

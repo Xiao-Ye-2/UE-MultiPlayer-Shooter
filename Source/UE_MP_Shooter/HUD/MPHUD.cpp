@@ -6,7 +6,11 @@
 
 #include "Announcement.h"
 #include "CharacterOverlay.h"
+#include "ElimAnnouncement.h"
 #include "Blueprint/UserWidget.h"
+#include "Blueprint/WidgetLayoutLibrary.h"
+#include "Components/CanvasPanelSlot.h"
+#include "Components/HorizontalBox.h"
 
 void AMPHUD::BeginPlay()
 {
@@ -33,6 +37,43 @@ void AMPHUD::AddAnnouncement()
 		Announcement->AddToViewport();
 	}
 }
+
+void AMPHUD::AddElimAnnouncement(FString Attacker, FString Victim)
+{
+	Owner = OwningPlayer == nullptr ? GetOwningPlayerController() : OwningPlayer;
+	if (OwningPlayer == nullptr || ElimAnnouncementClass == nullptr) return;
+	
+	UElimAnnouncement* ElimAnnouncementWidget = CreateWidget<UElimAnnouncement>(OwningPlayer, ElimAnnouncementClass);
+	if (ElimAnnouncementWidget == nullptr) return;
+	
+	ElimAnnouncementWidget->SetElimAnnouncementText(Attacker, Victim);
+	ElimAnnouncementWidget->AddToViewport();
+
+	for (auto Msg : ElimMessages)
+	{
+		if (Msg == nullptr || Msg->AnnouncementBox == nullptr) return;
+		UCanvasPanelSlot* CanvasSlot = UWidgetLayoutLibrary::SlotAsCanvasSlot(Msg->AnnouncementBox);
+		if (CanvasSlot == nullptr) continue;
+		
+		FVector2D Position = CanvasSlot->GetPosition();
+		FVector2D NewPosition(CanvasSlot->GetPosition().X,Position.Y - CanvasSlot->GetSize().Y);
+		CanvasSlot->SetPosition(NewPosition);
+	}
+
+	ElimMessages.Add(ElimAnnouncementWidget);
+
+	FTimerHandle ElimMsgTimer;
+	FTimerDelegate ElimMsgDelegate;
+	ElimMsgDelegate.BindUFunction(this, FName("ElimAnnouncementTimerFinished"), ElimAnnouncementWidget);
+	GetWorldTimerManager().SetTimer(ElimMsgTimer, ElimMsgDelegate, ElimAnnouncementTime,false);
+}
+
+void AMPHUD::ElimAnnouncementTimerFinished(UElimAnnouncement* MsgToRemove)
+{
+	if (MsgToRemove == nullptr) return;
+	MsgToRemove->RemoveFromParent();
+}
+
 
 void AMPHUD::DrawHUD()
 {

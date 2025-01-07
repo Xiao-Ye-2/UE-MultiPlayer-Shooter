@@ -3,6 +3,8 @@
 
 #include "MPCharacter.h"
 
+#include "NiagaraComponent.h"
+#include "NiagaraFunctionLibrary.h"
 #include "Camera/CameraComponent.h"
 #include "Components/BoxComponent.h"
 #include "Components/CapsuleComponent.h"
@@ -16,6 +18,7 @@
 #include "Sound/SoundCue.h"
 #include "UE_MP_Shooter/UE_MP_Shooter.h"
 #include "UE_MP_Shooter/GameMode/BlasterGameMode.h"
+#include "UE_MP_Shooter/GameState/MPGameState.h"
 #include "UE_MP_Shooter/MPComponents/CombatComponent.h"
 #include "UE_MP_Shooter/MPComponents/BuffComponent.h"
 #include "UE_MP_Shooter/MPComponents/LagCompensationComponent.h"
@@ -254,6 +257,11 @@ void AMPCharacter::PollAndInitialize()
 		{
 			MPPlayerState->AddToScore(0.f);
 			MPPlayerState->AddToDefeats(0);
+			AMPGameState* MPGameState = Cast<AMPGameState>(UGameplayStatics::GetGameState(this));
+			if (MPGameState && MPGameState->TopScoringPlayers.Contains(MPPlayerState))
+			{
+				MulticastGainedTheLead();
+			}
 		}
 	}
 }
@@ -363,6 +371,7 @@ void AMPCharacter::MulticastEliminate_Implementation(bool bPlayerLeftGame)
 	{
 		ShowSniperScopeWidget(false);
 	}
+	if (CrownComponent) CrownComponent->Deactivate();
 
 	GetWorldTimerManager().SetTimer(EliminatedTimer, this, &ThisClass::EliminateTimerFinished, EliminateDelay);
 }
@@ -798,6 +807,22 @@ void AMPCharacter::ServerLeaveGame_Implementation()
 	{
 		BlasterGameMode->PlayerLeftGame(MPPlayerState);
 	}
+}
+
+void AMPCharacter::MulticastGainedTheLead_Implementation()
+{
+	if (CrownSystem == nullptr) return;
+	if (CrownComponent == nullptr)
+	{
+		CrownComponent = UNiagaraFunctionLibrary::SpawnSystemAttached(CrownSystem, GetCapsuleComponent(), FName(),
+	GetActorLocation() + FVector(0.f, 0.f, 100.f), GetActorRotation(), EAttachLocation::KeepWorldPosition, false);
+	}
+	if (CrownComponent) CrownComponent->Activate();
+}
+
+void AMPCharacter::MulticastLostTheLead_Implementation()
+{
+	if (CrownComponent) CrownComponent->DestroyComponent();
 }
 
 bool AMPCharacter::IsWeaponEquipped() const
