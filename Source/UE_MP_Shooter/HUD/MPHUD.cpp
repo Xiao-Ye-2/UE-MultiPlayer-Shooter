@@ -40,7 +40,7 @@ void AMPHUD::AddAnnouncement()
 
 void AMPHUD::AddElimAnnouncement(FString Attacker, FString Victim)
 {
-	Owner = OwningPlayer == nullptr ? GetOwningPlayerController() : OwningPlayer;
+	OwningPlayer = OwningPlayer == nullptr ? GetOwningPlayerController() : OwningPlayer;
 	if (OwningPlayer == nullptr || ElimAnnouncementClass == nullptr) return;
 	
 	UElimAnnouncement* ElimAnnouncementWidget = CreateWidget<UElimAnnouncement>(OwningPlayer, ElimAnnouncementClass);
