@@ -15,6 +15,7 @@
 #include "UE_MP_Shooter/HUD/Announcement.h"
 #include "UE_MP_Shooter/HUD/CharacterOverlay.h"
 #include "UE_MP_Shooter/HUD/MPHUD.h"
+#include "UE_MP_Shooter/HUD/ReturnToMainMenu.h"
 #include "UE_MP_Shooter/MPComponents/CombatComponent.h"
 #include "UE_MP_Shooter/PlayerState/MPPlayerState.h"
 
@@ -24,6 +25,30 @@ void AMPPlayerController::BeginPlay()
 
 	MPHUD = Cast<AMPHUD>(GetHUD());
 	ServerCheckMatchState();
+}
+
+void AMPPlayerController::SetupInputComponent()
+{
+	Super::SetupInputComponent();
+
+	if (InputComponent == nullptr) return;
+	InputComponent->BindAction("Quit", IE_Pressed, this, &ThisClass::ShowReturnToMainMenu);
+}
+
+void AMPPlayerController::ShowReturnToMainMenu()
+{
+	if (ReturnToMainMenuWidgetClass == nullptr) return;
+	ReturnToMainMenu = ReturnToMainMenu == nullptr ? CreateWidget<UReturnToMainMenu>(this, ReturnToMainMenuWidgetClass) : ReturnToMainMenu;
+	if (ReturnToMainMenu == nullptr) return;
+	bReturnToMainMenuOpen = !bReturnToMainMenuOpen;
+	if (bReturnToMainMenuOpen)
+	{
+		ReturnToMainMenu->MenuSetup();
+	}
+	else
+	{
+		ReturnToMainMenu->MenuTearDown();
+	}
 }
 
 void AMPPlayerController::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const

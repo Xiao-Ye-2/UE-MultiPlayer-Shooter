@@ -8,7 +8,7 @@ public class UE_MP_Shooter : ModuleRules
 	{
 		PCHUsage = PCHUsageMode.UseExplicitOrSharedPCHs;
 	
-		PublicDependencyModuleNames.AddRange(new string[] { "Core", "CoreUObject", "Engine", "InputCore", "EnhancedInput", "Niagara" });
+		PublicDependencyModuleNames.AddRange(new string[] { "Core", "CoreUObject", "Engine", "InputCore", "EnhancedInput", "Niagara", "MultiPlayerSessions", "OnlineSubsystem", "OnlineSubsystemSteam" });
 
 		PrivateDependencyModuleNames.AddRange(new string[] {  });
 

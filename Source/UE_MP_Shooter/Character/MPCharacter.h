@@ -19,6 +19,8 @@ class AMPPlayerState;
 class FOnTimelineFloat;
 class AMPPlayerController;
 
+DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnLeftGame);
+
 UCLASS()
 class UE_MP_SHOOTER_API AMPCharacter : public ACharacter, public  IInteractWithCrosshairInterface
 {
@@ -41,9 +43,13 @@ public:
 	virtual void OnRep_ReplicatedMovement() override;
 	virtual void Destroyed() override;
 
-	void Eliminate();
+	void Eliminate(bool bPlayerLeftGame);
 	UFUNCTION(NetMulticast, Reliable)
-	void MulticastEliminate();
+	void MulticastEliminate(bool bPlayerLeftGame);
+
+	FOnLeftGame OnLeftGame;
+	UFUNCTION(Server, Reliable)
+	void ServerLeaveGame();
 
 	UPROPERTY()
 	AMPPlayerState* MPPlayerState;
@@ -144,7 +150,7 @@ private:
 	class UWidgetComponent* OverheadWidget;
 
 	UPROPERTY(ReplicatedUsing = OnRep_OverlappingWeapon)
-	class AWeapon* OverlappingWeapon;
+	AWeapon* OverlappingWeapon;
 
 	UPROPERTY()
 	AMPPlayerController* MPPlayerController;
@@ -246,6 +252,8 @@ private:
 	UParticleSystem* EliminationEffect;
 	UPROPERTY(EditAnywhere, Category = "Elimination")
 	USoundCue* EliminationEffectSound;
+
+	bool bLeftGame = false;
 
 	UPROPERTY(VisibleAnywhere)
 	UStaticMeshComponent* AttachedGrenade;

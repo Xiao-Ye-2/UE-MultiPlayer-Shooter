@@ -9,6 +9,7 @@
 
 class AMPPlayerController;
 class AMPCharacter;
+class AMPPlayerState;
 
 namespace MatchState
 {
@@ -27,7 +28,7 @@ public:
 	virtual void Tick(float DeltaSeconds) override;
 	virtual void PlayerEliminated(AMPCharacter* EliminatedCharacter, AMPPlayerController* EliminatedPlayerController, AMPPlayerController* AttakerPlayerController);
 	virtual void RequestRespawn(ACharacter* EliminatedCharacter, AController* EliminatedPlayerController);
-
+	void PlayerLeftGame(AMPPlayerState* LeavingPlayerState) const;
 	UPROPERTY(EditDefaultsOnly)
 	float WarmupTime = 10.f;
 	UPROPERTY(EditDefaultsOnly)

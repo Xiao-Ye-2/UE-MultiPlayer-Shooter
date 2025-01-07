@@ -6,6 +6,7 @@
 #include "GameFramework/PlayerController.h"
 #include "MPPlayerController.generated.h"
 
+class UReturnToMainMenu;
 class ABlasterGameMode;
 class UCharacterOverlay;
 class AMPHUD;
@@ -48,6 +49,7 @@ public:
 	FHighPingDelegate HighPingDelegate;
 protected:
 	virtual void BeginPlay() override;
+	virtual void SetupInputComponent() override;
 	void SetHUDTime();
 	void InitializeCharacterOverlay();
 	
@@ -68,13 +70,21 @@ protected:
 
 	UFUNCTION(Client, Reliable)
 	void ClientJoinMidGame(FName StateOfMatch, float Warmup, float Match, float Cooldown, float StartingTime);
+	
+	void ShowReturnToMainMenu();
 
 private:
 	UPROPERTY()
 	AMPHUD* MPHUD;
-
+	
 	UPROPERTY()
 	ABlasterGameMode* BlasterGameMode;
+
+	UPROPERTY(EditAnywhere, Category = "HUD")
+	TSubclassOf<UUserWidget> ReturnToMainMenuWidgetClass;
+	UPROPERTY()
+	UReturnToMainMenu* ReturnToMainMenu;
+	bool bReturnToMainMenuOpen = false;
 
 	float LevelStartingTime = 0.f;
 	float MatchTime = 0.f;
@@ -117,4 +127,3 @@ private:
 	UFUNCTION(Server, Reliable)
 	void ServerReportPintStatus(bool bHighPing);
 };
-

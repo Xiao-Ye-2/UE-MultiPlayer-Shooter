@@ -87,7 +87,7 @@ void ABlasterGameMode::PlayerEliminated(AMPCharacter* EliminatedCharacter,
 	}
 	if (EliminatedCharacter)
 	{
-		EliminatedCharacter->Eliminate();
+		EliminatedCharacter->Eliminate(false);
 	}
 }
 
@@ -104,5 +104,19 @@ void ABlasterGameMode::RequestRespawn(ACharacter* EliminatedCharacter, AControll
 		UGameplayStatics::GetAllActorsOfClass(this, APlayerStart::StaticClass(), PlayerStarts);
 		int32 Selection = FMath::RandRange(0, PlayerStarts.Num() - 1);
 		RestartPlayerAtPlayerStart(EliminatedPlayerController, PlayerStarts[Selection]);
+	}
+}
+
+void ABlasterGameMode::PlayerLeftGame(AMPPlayerState* LeavingPlayerState) const
+{
+	if (LeavingPlayerState == nullptr) return;
+	AMPGameState* MPGameState = GetGameState<AMPGameState>();
+	if (MPGameState && MPGameState->TopScoringPlayers.Contains(LeavingPlayerState))
+	{
+		MPGameState->TopScoringPlayers.Remove(LeavingPlayerState);
+	}
+	if (AMPCharacter* LeavingPlayer = Cast<AMPCharacter>(LeavingPlayerState->GetPawn()))
+	{
+		LeavingPlayer->Eliminate(true);
 	}
 }

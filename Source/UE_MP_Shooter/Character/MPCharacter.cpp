@@ -304,15 +304,14 @@ void AMPCharacter::OnRep_ReplicatedMovement()
 	TimeSinceLastMovementReplication = 0.f;
 }
 
-void AMPCharacter::Eliminate()
+void AMPCharacter::Eliminate(bool bPlayerLeftGame)
 {
 	if (CombatComponent)
 	{
 		WeaponHandleWhenEliminated(CombatComponent->EquippedWeapon);
 		WeaponHandleWhenEliminated(CombatComponent->SecondaryWeapon);
 	}
-	MulticastEliminate();
-	GetWorldTimerManager().SetTimer(EliminatedTimer, this, &ThisClass::EliminateTimerFinished, EliminateDelay);
+	MulticastEliminate(bPlayerLeftGame);
 }
 
 void AMPCharacter::WeaponHandleWhenEliminated(AWeapon* Weapon)
@@ -322,12 +321,10 @@ void AMPCharacter::WeaponHandleWhenEliminated(AWeapon* Weapon)
 	else Weapon->Drop();
 }
 
-void AMPCharacter::MulticastEliminate_Implementation()
+void AMPCharacter::MulticastEliminate_Implementation(bool bPlayerLeftGame)
 {
-	if (MPPlayerController)
-	{
-		MPPlayerController->SetHUDWeaponAmmo(0);
-	}
+	bLeftGame = bPlayerLeftGame;
+	if (MPPlayerController) MPPlayerController->SetHUDWeaponAmmo(0);
 	bEliminated = true;
 	PlayEliminateMontage();
 
@@ -366,14 +363,20 @@ void AMPCharacter::MulticastEliminate_Implementation()
 	{
 		ShowSniperScopeWidget(false);
 	}
+
+	GetWorldTimerManager().SetTimer(EliminatedTimer, this, &ThisClass::EliminateTimerFinished, EliminateDelay);
 }
 
 void AMPCharacter::EliminateTimerFinished()
 {
 	ABlasterGameMode* BlasterGameMode = GetWorld()->GetAuthGameMode<ABlasterGameMode>();
-	if (BlasterGameMode)
+	if (BlasterGameMode && !bLeftGame)
 	{
 		BlasterGameMode->RequestRespawn(this, Controller);
+	}
+	else if (bLeftGame && IsLocallyControlled())
+	{
+		OnLeftGame.Broadcast();
 	}
 }
 
@@ -784,6 +787,16 @@ void AMPCharacter::SpawnDefaultWeapon()
 		AWeapon* StartingWeapon = World->SpawnActor<AWeapon>(DefaultWeaponClass);
 		StartingWeapon->bDestroyWeaponWhenDrop = true;
 		CombatComponent->EquipWeapon(StartingWeapon);
+	}
+}
+
+void AMPCharacter::ServerLeaveGame_Implementation()
+{
+	ABlasterGameMode* BlasterGameMode = GetWorld()->GetAuthGameMode<ABlasterGameMode>();
+	MPPlayerState = MPPlayerState == nullptr ? GetPlayerState<AMPPlayerState>() : MPPlayerState;
+	if (BlasterGameMode && MPPlayerState)
+	{
+		BlasterGameMode->PlayerLeftGame(MPPlayerState);
 	}
 }
 
