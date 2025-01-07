@@ -40,7 +40,8 @@ void AHitScanWeapon::Fire(const FVector& HitTarget)
 	if (MPCharacter == nullptr || OwnerPawnController == nullptr) return;
 	if (HasAuthority() && (!bUseServerSideRewind || OwnerPawn->IsLocallyControlled()))
 	{
-		UGameplayStatics::ApplyDamage(MPCharacter, GetDamage(), OwnerPawnController, this, UDamageType::StaticClass());
+		float DamageToCause = Hit.BoneName.ToString() == FString("head") ? GetHeadShotDamage() : GetDamage();
+		UGameplayStatics::ApplyDamage(MPCharacter, DamageToCause, OwnerPawnController, this, UDamageType::StaticClass());
 	}
 	else if (!HasAuthority() && bUseServerSideRewind)
 	{

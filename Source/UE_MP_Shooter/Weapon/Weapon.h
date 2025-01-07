@@ -109,6 +109,8 @@ protected:
 
 	UPROPERTY(EditAnywhere)
 	float Damage = 20.f;
+	UPROPERTY(EditAnywhere)
+	float HeadShotDamage = 20.f;
 	UPROPERTY(Replicated, EditAnywhere)
 	bool bUseServerSideRewind = false;
 	UFUNCTION()
@@ -176,6 +178,7 @@ public:
 	FORCEINLINE bool IsFull() const { return Ammo >= MagCapacity; }
 	FORCEINLINE bool IsUsingScatter() const { return bUseScatter; }
 	FORCEINLINE float GetDamage() const { return Damage; }
+	FORCEINLINE float GetHeadShotDamage() const { return HeadShotDamage; }
 };
 
 

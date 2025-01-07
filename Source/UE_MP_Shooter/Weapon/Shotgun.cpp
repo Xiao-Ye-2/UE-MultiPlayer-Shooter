@@ -25,6 +25,7 @@ void AShotgun::FireShotgun(const TArray<FVector_NetQuantize>& HitTargets)
 	FTransform SocketTransform = MuzzleFlashSocket->GetSocketTransform(GetWeaponMesh());
 	FVector Start = SocketTransform.GetLocation();
 	TMap<AMPCharacter*, uint32> BulletsHitMap;
+	TMap<AMPCharacter*, uint32> HeadShotHitMap;
 
 	for (auto HitTarget : HitTargets)
 	{
@@ -32,22 +33,45 @@ void AShotgun::FireShotgun(const TArray<FVector_NetQuantize>& HitTargets)
 		WeaponTraceHit(Hit, Start, HitTarget, 0.5f, FMath::FRandRange(-.5f, .5f));
 		if (AMPCharacter* MPCharacter = Cast<AMPCharacter>(Hit.GetActor()))
 		{
-			if (BulletsHitMap.Contains(MPCharacter)) BulletsHitMap[MPCharacter] += 1;
-			else BulletsHitMap.Emplace(MPCharacter, 1);
+			const bool bHeadShot = Hit.BoneName.ToString() == FString("head");
+			if (bHeadShot)
+			{
+				if (HeadShotHitMap.Contains(MPCharacter)) HeadShotHitMap[MPCharacter]++;
+				else HeadShotHitMap.Emplace(MPCharacter, 1);
+			}
+			else
+			{
+				if (BulletsHitMap.Contains(MPCharacter)) BulletsHitMap[MPCharacter]++;
+				else BulletsHitMap.Emplace(MPCharacter, 1);
+			}
 		}
 	}
 
 	TArray<AMPCharacter*> HitCharacters;
+	TMap<AMPCharacter*, float> DamageMap;
 	for (auto HitPair : BulletsHitMap)
 	{
-		if (HitPair.Key == nullptr || OwnerPawnController == nullptr) return;
-		HitCharacters.Add(HitPair.Key);
-		if (HasAuthority() && (!bUseServerSideRewind || OwnerPawn->IsLocallyControlled()))
-		{
-			UGameplayStatics::ApplyDamage(HitPair.Key, GetDamage() * HitPair.Value, OwnerPawnController, this, UDamageType::StaticClass());
-		}
+		if (HitPair.Key == nullptr) return;
+		HitCharacters.AddUnique(HitPair.Key);
+		DamageMap.Emplace(HitPair.Key, HitPair.Value * GetDamage());
+	}
+	for (auto HeadShotHitPair : HeadShotHitMap)
+	{
+		if (HeadShotHitPair.Key == nullptr) return;
+		HitCharacters.AddUnique(HeadShotHitPair.Key);
+		
+		if (DamageMap.Contains(HeadShotHitPair.Key)) DamageMap[HeadShotHitPair.Key] += HeadShotHitPair.Value * GetHeadShotDamage();
+		else DamageMap.Emplace(HeadShotHitPair.Key, HeadShotHitPair.Value * GetHeadShotDamage());
 	}
 
+	for (auto DamagePair : DamageMap)
+	{
+		if (DamagePair.Key && OwnerPawnController && HasAuthority() && (!bUseServerSideRewind || OwnerPawn->IsLocallyControlled()))
+		{
+			UGameplayStatics::ApplyDamage(DamagePair.Key, DamagePair.Value, OwnerPawnController, this, UDamageType::StaticClass());
+		}
+	}
+	
 	if (!HasAuthority() && bUseServerSideRewind)
 	{
 		OwnerCharacter = OwnerCharacter == nullptr ? Cast<AMPCharacter>(OwnerPawn) : OwnerCharacter;
